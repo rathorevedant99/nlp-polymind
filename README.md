@@ -33,3 +33,6 @@ git checkout -b <branch-name>
 We aim to build a robust system on a multi-llm architecture, capable of being specialized in any domain (given enough text data). The idea is to create a mixture-of-agents that debate and correct each other(Self Play Fine Tuning). Any “major learnings” where most of the agents are incorrect should be stored in a global memory (vector-db for now) that will influence the future responses of the agents. Eventually, the agents respond to a query if they are confident (Hallucinogens are not allowed :D ). Later, go on and fine-tune it to your use-case.
 
 ## Project Description
+Important Links:
+[SPIN Paper](https://arxiv.org/abs/2401.01335)
+[GitHub Repo](https://github.com/uclaml/SPIN)  
