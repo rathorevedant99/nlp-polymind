@@ -172,6 +172,8 @@ cython_debug/
 
 # Local Files
 *local*
+*eduroam*
 
 # Checkpoints
 *checkpoint*
+*response*
