@@ -1,0 +1,34 @@
+Inference before training:
+Input: Hannah: Hey, do you have Betty's number?
+Amanda: Lemme check
+Hannah: <file_gif>
+Amanda: Sorry, can't find it.
+Amanda: Ask Larry
+Amanda: He called her last time we were at the park together
+Hannah: I don't know him well
+Hannah: <file_gif>
+Amanda: Don't be shy, he's very nice
+Hannah: If you say so..
+Hannah: I'd rather you texted him
+Amanda: Just text him 🙂
+Hannah: Urgh.. Alright
+Hannah: Bye
+Amanda: Bye bye
+Output: ["Summarize the following conversation:\n\nDialogue:\nHannah: Hey, do you have Betty's number?\nAmanda: Lemme check\nHannah: <file_gif>\nAmanda: Sorry, can't find it.\nAmanda: Ask Larry\nAmanda: He called her last time we were at the park together\nHannah: I don't know him well\nHannah: <file_gif>\nAmanda: Don't be shy, he's very nice\nHannah: If you say so..\nHannah: I'd rather you texted him\nAmanda: Just text him 🙂\nHannah: Urgh.. Alright\nHannah: Bye\nAmanda: Bye bye\n\nSummary:\n\n1. The conversation is a bit awkward.\n2. The conversation is a bit awkward.\n3. The conversation is a bit awkward.\n4. The conversation is a bit awkward.\n5. The conversation is a bit awkward.\n6. The conversation is a bit awkward.\n7. The conversation"]
+Input: Eric: MACHINE!
+Rob: That's so gr8!
+Eric: I know! And shows how Americans see Russian ;)
+Rob: And it's really funny!
+Eric: I know! I especially like the train part!
+Rob: Hahaha! No one talks to the machine like that!
+Eric: Is this his only stand-up?
+Rob: Idk. I'll check.
+Eric: Sure.
+Rob: Turns out no! There are some of his stand-ups on youtube.
+Eric: Gr8! I'll watch them now!
+Rob: Me too!
+Eric: MACHINE!
+Rob: MACHINE!
+Eric: TTYL?
+Rob: Sure :)
+Output: ["Summarize the following conversation:\n\nDialogue:\nEric: MACHINE!\r\nRob: That's so gr8!\r\nEric: I know! And shows how Americans see Russian ;)\r\nRob: And it's really funny!\r\nEric: I know! I especially like the train part!\r\nRob: Hahaha! No one talks to the machine like that!\r\nEric: Is this his only stand-up?\r\nRob: Idk. I'll check.\r\nEric: Sure.\r\nRob: Turns out no! There are some of his stand-ups on youtube.\r\nEric: Gr8! I'll watch them now!\r\nRob: Me too!\r\nEric: MACHINE!\r\nRob: MACHINE!\r\nEric: TTYL?\r\nRob: Sure :)\n\nSummary:\n\n1. The robot is a stand-up comedian.\n2. The robot is a stand-up comedian.\n3. The robot is a stand-up comedian.\n4. The robot is a stand-up comedian.\n5. The robot is a stand-up comedian."]
