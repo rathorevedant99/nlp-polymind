@@ -37,12 +37,14 @@ class Expert(BaseAgent):
         self.model.print_trainable_parameters()
 
         self.training_args = TrainingArguments(**config.training)
+
+        self.feedback = []
     
     def fine_tune_unsloth(self):
         """
         Fine-tune the critic on the given data using Unsloth.
         """
-        pass
+        raise NotImplementedError("Unsloth fine-tuning is not implemented yet")
 
     def fine_tune_std_lora(self, save=False):
         """
@@ -50,6 +52,11 @@ class Expert(BaseAgent):
         """
         if self.train_data is None or self.eval_data is None:
             raise ValueError("Train and eval data must be provided")
+        
+        if os.path.exists(self.config.training.output_dir+f"/expert_{self.expert_id}"):
+            self.load_lora()
+            logger.info(f"Loaded LORA weights for expert {self.expert_id}")
+            return
         
         logger.info(f"Fine-tuning expert {self.expert_id} using standard LORA")
         data_collator = DataCollatorForLanguageModeling(self.tokenizer, mlm=False)
@@ -80,8 +87,11 @@ class Expert(BaseAgent):
         """
         Load the LORA weights.
         """
-        self.model = get_peft_model(self.model, self.lora_config)
-        self.model.load_adapter(self.config.training.output_dir+f"/expert_{self.expert_id}")
+        try:
+            self.model.load_adapter(model_id=self.config.training.output_dir+f"/expert_{self.expert_id}", adapter_name="default")
+        except Exception as e:
+            logger.error(f"Error loading LORA weights for expert {self.expert_id}: {e}", exc_info=True)
+            raise e
 
     def generate(self, task):
         """
@@ -102,3 +112,9 @@ class Expert(BaseAgent):
         )
         
         return self.tokenizer.decode(output[0], skip_special_tokens=True)
+    
+    def update(self, feedback):
+        """
+        Update the expert's feedback.
+        """
+        self.feedback.append(feedback)

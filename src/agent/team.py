@@ -8,6 +8,9 @@ from src.agent.expert import Expert
 class ExpertTeam:
     def __init__(self, experts=None):
         self.experts = experts if experts is not None else []
+
+        if not all(isinstance(expert, Expert) for expert in self.experts):
+            raise ValueError("All experts must be instances of Expert class")
     
     def add_expert(self, expert):
         """
@@ -19,11 +22,13 @@ class ExpertTeam:
     
     def get_expert_answers(self, task):
         """
-        Get answers from both experts for a given task.
+        Get answers from all experts for a given task.
         Args:
             task (str): Task description
         Returns:
             List[str]: List containing answers from both experts
         """
-        answers = [expert.generate(task) for expert in self.experts]
-        return answers
+        model_answers = {}
+        for expert in self.experts:
+            model_answers[expert.expert_id] = expert.generate(task)
+        return model_answers

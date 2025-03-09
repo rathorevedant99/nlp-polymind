@@ -49,8 +49,8 @@ class Critic(BaseAgent):
         tokenized_prompt = self.tokenizer(prompt, return_tensors="pt", truncation=True, padding=True)
 
         output = self.model.generate(
-            input_ids=tokenized_prompt["input_ids"],
-            attention_mask=tokenized_prompt["attention_mask"],  
+            input_ids=tokenized_prompt["input_ids"].to(self.model.device),
+            attention_mask=tokenized_prompt["attention_mask"].to(self.model.device),  
             pad_token_id=self.tokenizer.eos_token_id 
         )
 

@@ -58,7 +58,7 @@ class Data:
     def load_data(self):
         self.data = load_dataset(self.dataset_name)
 
-    def tokenize_data(self):
+    def tokenize_data(self, save=False):
         model_hash = hashlib.md5(self.model_name.encode()).hexdigest()
         dataset_hash = hashlib.md5(self.dataset_name.encode()).hexdigest()
         cache_file = os.path.join(self.data_cache_dir, f"{model_hash}_{dataset_hash}.cache")
@@ -68,7 +68,8 @@ class Data:
         else:
             logger.info(f"Tokenizing data")
             self.preprocessed_data = self.data.map(self._preprocess_data, batched=True)
-            self.preprocessed_data.save_to_disk(cache_file)
+            if save:
+                self.preprocessed_data.save_to_disk(cache_file)
         self._tokenized = True
         
     def save_tokenized_data(self):
