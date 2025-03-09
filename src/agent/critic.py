@@ -3,12 +3,23 @@ Author: Arushi Agrawal
 Critic Class
 """
 
-from agent.base import BaseAgent
+from src.agent.base import BaseAgent
 
 class Critic(BaseAgent):
     def __init__(self, config):
         super().__init__(config)
     
+    def __call__(self, task, expert_answers, ground_truth):
+        """
+        Evaluate expert answers and return the best one along with reasoning
+        """
+        return self.evaluate(task, expert_answers, ground_truth)
+    
+    def __repr__(self):
+        """
+        Return a string representation of the critic
+        """
+        return f"Critic(model={self.model}, tokenizer={self.tokenizer})"
 
     def evaluate(self, task, expert_answers, ground_truth):
         """

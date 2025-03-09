@@ -2,14 +2,88 @@
 Author: Payal Agarwal
 Expert Class
 """
-from agent.base import BaseAgent
+from src.agent.base import BaseAgent
+from peft import get_peft_model, LoraConfig, TaskType
+from transformers import DataCollatorForLanguageModeling, Trainer, TrainingArguments
+import os
+import logging
+import hashlib
+
+logger = logging.getLogger(__name__)
 
 class Expert(BaseAgent):
-    def __init__(self, config, expert_id):
+    def __init__(self, config, expert_id, train_data=None, eval_data=None):
         super().__init__(config)
         self.expert_id = expert_id
 
-    def generate(self, prompt):
+        self.train_data = train_data
+        self.eval_data = eval_data
+
+        ## Adding this explicitly since Hydraconfig makes the target_modules non JSON serializable
+        target_modules = list(config.lora.target_modules) if config.lora.target_modules else None 
+
+        self.lora_config = LoraConfig(
+            task_type=TaskType.SEQ_2_SEQ_LM,
+            r=config.lora.r,
+            lora_alpha=config.lora.lora_alpha,
+            lora_dropout=config.lora.lora_dropout,
+            target_modules=target_modules
+        )
+
+        if config.lora.enabled:
+            self.model = get_peft_model(self.model, self.lora_config)
+
+        self.model.config.gradient_checkpointing = False
+        self.model.print_trainable_parameters()
+
+        self.training_args = TrainingArguments(**config.training)
+    
+    def fine_tune_unsloth(self):
+        """
+        Fine-tune the critic on the given data using Unsloth.
+        """
+        pass
+
+    def fine_tune_std_lora(self, save=False):
+        """
+        Fine-tune the critic on the given data using standard LORA.
+        """
+        if self.train_data is None or self.eval_data is None:
+            raise ValueError("Train and eval data must be provided")
+        
+        logger.info(f"Fine-tuning expert {self.expert_id} using standard LORA")
+        data_collator = DataCollatorForLanguageModeling(self.tokenizer, mlm=False)
+
+        self.trainer = Trainer(
+            model=self.model,
+            args=self.training_args,
+            train_dataset=self.train_data,
+            eval_dataset=self.eval_data,
+            data_collator=data_collator
+        )
+
+        self.trainer.train()
+        logger.info(f"Trained model")
+        if save:
+            self.store_lora()
+            logger.info(f"Stored LORA weights")
+
+    def store_lora(self):
+        """
+        Store the LORA weights.
+        """
+        if not os.path.exists(self.config.training.output_dir+f"/expert_{self.expert_id}"):
+            os.makedirs(self.config.training.output_dir+f"/expert_{self.expert_id}")
+        self.model.save_pretrained(self.config.training.output_dir+f"/expert_{self.expert_id}")
+
+    def load_lora(self):
+        """
+        Load the LORA weights.
+        """
+        self.model = get_peft_model(self.model, self.lora_config)
+        self.model.load_adapter(self.config.training.output_dir+f"/expert_{self.expert_id}")
+
+    def generate(self, task):
         """
         Generate an expert answer for the given task.
         Args:
@@ -19,28 +93,12 @@ class Expert(BaseAgent):
         """
         expert_prompt = f"You are an expert. Provide a detailed and accurate answer to the following task:\n\nTask: {task}\n\nAnswer:"
         
-        tokenized_prompt = self.tokenizer(expert_prompt, return_tensors="pt", truncation=True, padding=True)
+        tokenized_prompt = self.tokenizer(expert_prompt.format(task), return_tensors="pt", truncation=True, padding=True)
         output = self.model.generate(
-            input_ids=tokenized_prompt["input_ids"],
-            attention_mask=tokenized_prompt["attention_mask"],  
-            pad_token_id=self.tokenizer.eos_token_id 
+            input_ids=tokenized_prompt["input_ids"].to(self.model.device),
+            attention_mask=tokenized_prompt["attention_mask"].to(self.model.device),  
+            pad_token_id=self.tokenizer.eos_token_id,
+            max_new_tokens=128
         )
         
         return self.tokenizer.decode(output[0], skip_special_tokens=True)
-
-class ExpertTeam:
-    def __init__(self, config):
-        self.expert1 = Expert(config, expert_id=1)
-        self.expert2 = Expert(config, expert_id=2)
-    
-    def get_expert_answers(self, task):
-        """
-        Get answers from both experts for a given task.
-        Args:
-            task (str): Task description
-        Returns:
-            List[str]: List containing answers from both experts
-        """
-        answer1 = self.expert1.generate(task)
-        answer2 = self.expert2.generate(task)
-        return [answer1, answer2]

@@ -177,3 +177,12 @@ cython_debug/
 # Checkpoints
 *checkpoint*
 *response*
+
+# Results
+results/*
+
+# Hydra logs
+outputs/*
+
+# Data cache
+*cache*
