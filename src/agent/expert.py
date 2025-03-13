@@ -106,6 +106,8 @@ class Expert(BaseAgent):
         """
         # Use the same prompt format as in training
         expert_prompt = f"Summarize this conversation:\n\n{task}\n\n"
+
+        logger.info(f"Prompt to expert: {expert_prompt}")
         
         tokenized_prompt = self.tokenizer(expert_prompt, return_tensors="pt", truncation=True, padding=True, max_length=512)
         
@@ -116,8 +118,11 @@ class Expert(BaseAgent):
                 input_ids=tokenized_prompt["input_ids"].to(self.model.device),
                 attention_mask=tokenized_prompt["attention_mask"].to(self.model.device)
             )
+
+        decoded_output = self.tokenizer.decode(output[0], skip_special_tokens=True)
+        logger.info(f"Expert {self.expert_id} answer: {decoded_output}")
         
-        return self.tokenizer.decode(output[0], skip_special_tokens=True)
+        return decoded_output
     
     def update(self, feedback):
         """
