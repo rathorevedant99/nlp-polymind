@@ -7,7 +7,7 @@ from peft import get_peft_model, LoraConfig, TaskType
 from transformers import DataCollatorForLanguageModeling, Trainer, TrainingArguments
 import os
 import logging
-import hashlib
+import torch
 
 logger = logging.getLogger(__name__)
 
@@ -19,15 +19,18 @@ class Expert(BaseAgent):
         self.train_data = train_data
         self.eval_data = eval_data
 
-        ## Adding this explicitly since Hydraconfig makes the target_modules non JSON serializable
-        target_modules = list(config.lora.target_modules) if config.lora.target_modules else None 
+        if self.config.agent.type == "causal":
+            target_modules = ["q_proj", "v_proj"]
+        else:
+            target_modules = ["q", "v"] # ["q" "v", "k", "o"]
 
         self.lora_config = LoraConfig(
-            task_type=TaskType.SEQ_2_SEQ_LM,
+            task_type=TaskType.CAUSAL_LM if self.config.agent.type == "causal" else TaskType.SEQ_2_SEQ_LM,
             r=config.lora.r,
             lora_alpha=config.lora.lora_alpha,
             lora_dropout=config.lora.lora_dropout,
-            target_modules=target_modules
+            target_modules=target_modules,
+            bias=config.lora.bias
         )
 
         if config.lora.enabled:
@@ -101,15 +104,18 @@ class Expert(BaseAgent):
         Returns:
             str: Generated expert answer
         """
-        expert_prompt = f"You are an expert. Provide a detailed and accurate answer to the following task:\n\nTask: {task}\n\nAnswer:"
+        # Use the same prompt format as in training
+        expert_prompt = f"Summarize this conversation:\n\n{task}\n\n"
         
-        tokenized_prompt = self.tokenizer(expert_prompt.format(task), return_tensors="pt", truncation=True, padding=True)
-        output = self.model.generate(
-            input_ids=tokenized_prompt["input_ids"].to(self.model.device),
-            attention_mask=tokenized_prompt["attention_mask"].to(self.model.device),  
-            pad_token_id=self.tokenizer.eos_token_id,
-            max_new_tokens=128
-        )
+        tokenized_prompt = self.tokenizer(expert_prompt, return_tensors="pt", truncation=True, padding=True, max_length=512)
+        
+        self.model.eval()
+        
+        with torch.no_grad():
+            output = self.model.generate(
+                input_ids=tokenized_prompt["input_ids"].to(self.model.device),
+                attention_mask=tokenized_prompt["attention_mask"].to(self.model.device)
+            )
         
         return self.tokenizer.decode(output[0], skip_special_tokens=True)
     
