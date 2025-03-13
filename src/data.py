@@ -21,7 +21,6 @@ class Data:
         self.load_data()
         self.tokenize_data()
 
-
     def _init_tokenizer(self):
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
 
@@ -32,7 +31,7 @@ class Data:
         if self.dataset_name == "samsum":
             inputs = [f"Summarize this conversation:\n\n{ex}\n\n" for ex in examples['dialogue']]
             targets = [ex + self.tokenizer.eos_token for ex in examples['summary']]
-
+            
             model_inputs = self.tokenizer(
                 inputs,
                 max_length=max_input_length,
@@ -40,17 +39,19 @@ class Data:
                 padding="max_length"
             )
 
-            labels = self.tokenizer(
-                targets,
-                max_length=max_target_length,
-                truncation=True,
-                padding="max_length"
-            )["input_ids"]
+            # For seq2seq models, we need to set the decoder_input_ids
+            with self.tokenizer.as_target_tokenizer():
+                labels = self.tokenizer(
+                    targets,
+                    max_length=max_target_length,
+                    truncation=True,
+                    padding="max_length"
+                )["input_ids"]
 
-            labels = [label[1:] + [-100] for label in labels]
+            if self.config.agent.type == "causal":
+                labels = [label[1:] + [-100] for label in labels]
 
             model_inputs["labels"] = labels
-
             return model_inputs
         else:
             raise ValueError(f"Invalid dataset name: {self.dataset_name}")
@@ -58,7 +59,7 @@ class Data:
     def load_data(self):
         self.data = load_dataset(self.dataset_name)
 
-    def tokenize_data(self, save=False):
+    def tokenize_data(self, save=True):
         model_hash = hashlib.md5(self.model_name.encode()).hexdigest()
         dataset_hash = hashlib.md5(self.dataset_name.encode()).hexdigest()
         cache_file = os.path.join(self.data_cache_dir, f"{model_hash}_{dataset_hash}.cache")

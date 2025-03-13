@@ -14,11 +14,6 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def split_test_data(test_data, split_ratio=0.5):
-    """
-    Split the test data into two parts.
-    """
-    return test_data[int(len(test_data) * split_ratio):], test_data[:int(len(test_data) * split_ratio)]
 
 @hydra.main(version_base=None, config_path="configs", config_name="config.yaml")
 def main(config: DictConfig):
@@ -49,21 +44,18 @@ def main(config: DictConfig):
             logger.error(f"Error fine-tuning expert {i}: {e}")
             raise e
         experts.append(expert)
-    
-    team = ExpertTeam(experts)
-
-    critic = Critic(config)
-    debate = Debate(config, team, critic)
 
     if config.mode == "dev":
         truncated_eval_data = eval_data.select(range(5))
         truncated_test_data = test_data.select(range(5))
     else:
         truncated_eval_data = eval_data
-        truncated_test_data = test_data
+        truncated_test_data = test_data    
 
-    logger.info(f"Truncated Eval Data Type: {type(truncated_eval_data)}")
-    logger.info(f"Truncated Test Data Type: {type(truncated_test_data)}")
+    team = ExpertTeam(experts)
+
+    critic = Critic(config)
+    debate = Debate(config, team, critic)
 
     logger.info("Starting debate")
 
@@ -79,10 +71,10 @@ def main(config: DictConfig):
     for task_set in truncated_test_data:
         task = task_set["dialogue"]
         ground_truth = task_set["summary"]
-        first_answer = debate.get_first_answer(task)
-        logger.info(f"Task: {task}")
+        expert_answer = debate.get_final_answer(task)
+        # logger.info(f"Task: {task}")
         logger.info(f"Ground truth: {ground_truth}")
-        logger.info(f"First answer: {first_answer}")
+        logger.info(f"Expert answer: {expert_answer}")
 
 
 if __name__ == "__main__":

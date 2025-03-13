@@ -43,7 +43,7 @@ class Debate:
         """
         if not self._have_debated:
             raise ValueError("Debate has not been executed yet")
-        self.expert_answers = self.experts.get_expert_answers(task)
+        self.expert_answers = self.expert_team.get_expert_answers(task)
         return self.expert_answers
     
     def get_first_answer(self, task: str):
