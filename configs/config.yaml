@@ -16,6 +16,7 @@ model_params:
 experts:
   num_experts: 2
   debate_rounds: 3
+  feedback_size: 2
 
 lora:
   enabled: true
@@ -40,6 +41,6 @@ training:
 
 data:
   data_cache_dir: "./data/cache"
-  category: "summarization"
+  category: "summarization" # "summarization" or "math"
   name: "samsum"
   split: ["train[:10%]+validation[:5%]+test[:5%]"]

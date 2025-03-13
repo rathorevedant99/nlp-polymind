@@ -15,6 +15,12 @@ class Expert(BaseAgent):
     def __init__(self, config, expert_id, train_data=None, eval_data=None):
         super().__init__(config)
         self.expert_id = expert_id
+        if self.config.data.category == "summarization":
+            self.default_prompt = "Summarize this conversation:\n\n{}\n\n"
+        elif self.config.data.category == "math":
+            self.default_prompt = "Solve this math problem:\n\n{}\n\n"
+        else:
+            raise ValueError(f"Unsupported data category: {self.config.data.category}")
 
         self.train_data = train_data
         self.eval_data = eval_data
@@ -42,6 +48,7 @@ class Expert(BaseAgent):
         self.training_args = TrainingArguments(**config.training)
 
         self.feedback = []
+        self.feedback_size = config.experts.feedback_size
     
     def fine_tune_unsloth(self):
         """
@@ -104,8 +111,17 @@ class Expert(BaseAgent):
         Returns:
             str: Generated expert answer
         """
-        # Use the same prompt format as in training
-        expert_prompt = f"Summarize this conversation:\n\n{task}\n\n"
+        feedback_context = ""
+        if len(self.feedback) > 0:
+            feedback_context = "Critic's feedback:\n\n"
+            if len(self.feedback) > self.feedback_size:
+                feedback_context += "\n".join([f"- {feedback}" for feedback in self.feedback[-self.feedback_size:]])
+            else:
+                feedback_context += "\n".join([f"- {feedback}" for feedback in self.feedback])
+            feedback_context += "\n\n Consider the above feedback while generating the response.\n\n"
+    
+        expert_prompt = feedback_context + self.default_prompt.format(task)
+        logger.info(f"Expert prompt: {expert_prompt}")
         
         tokenized_prompt = self.tokenizer(expert_prompt, return_tensors="pt", truncation=True, padding=True, max_length=512)
         
@@ -114,7 +130,8 @@ class Expert(BaseAgent):
         with torch.no_grad():
             output = self.model.generate(
                 input_ids=tokenized_prompt["input_ids"].to(self.model.device),
-                attention_mask=tokenized_prompt["attention_mask"].to(self.model.device)
+                attention_mask=tokenized_prompt["attention_mask"].to(self.model.device),
+                pad_token_id=self.tokenizer.eos_token_id
             )
         
         return self.tokenizer.decode(output[0], skip_special_tokens=True)

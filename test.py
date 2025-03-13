@@ -7,7 +7,7 @@ from omegaconf import DictConfig
 from src.agent.expert import Expert
 from src.agent.team import ExpertTeam
 from src.agent.critic import Critic
-from src.data import Data
+from utils.data import Data
 from src.eval import Debate
 import logging
 
@@ -32,16 +32,16 @@ def main(config: DictConfig):
     expert = Expert(config, 0, train_data, eval_data)
     expert.fine_tune_std_lora(save=False)
 
-    truncated_eval_data = eval_data.select(range(5))
-    truncated_test_data = test_data.select(range(5))
+    truncated_eval_data = eval_data.select(range(2))
+    truncated_test_data = test_data.select(range(2))
 
 
     for task_set in truncated_eval_data:
         task = task_set["dialogue"]
         ground_truth = task_set["summary"]
         answer = expert.generate(task)
-        logger.info(f"Task: {task}")
-        logger.info(f"Ground truth: {ground_truth}")
+        # logger.info(f"Task: {task}")
+        # logger.info(f"Ground truth: {ground_truth}")
         logger.info(f"Answer: {answer}")
 
 
