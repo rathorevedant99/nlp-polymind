@@ -10,10 +10,10 @@ class Data:
     def __init__(self, config: dict):
         self.config = config
         self.data_category = config.data.category
-        self.model_name = config.agent.name
+        self.model_name = config.experts.name
         self.dataset_name = config.data.name
         self.split = config.data.split
-        self.device = config.agent.device
+        self.device = config.experts.device
         self.data_cache_dir = config.data.data_cache_dir
         self._tokenized = False
 
@@ -48,7 +48,7 @@ class Data:
                     padding="max_length"
                 )["input_ids"]
 
-            if self.config.agent.type == "causal":
+            if self.config.experts.type == "causal":
                 labels = [label[1:] + [-100] for label in labels]
 
             model_inputs["labels"] = labels

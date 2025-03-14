@@ -7,7 +7,7 @@ from src.agent.base import BaseAgent
 
 class Critic(BaseAgent):
     def __init__(self, config):
-        super().__init__(config)
+        super().__init__(config, "critic")
         self.task_type = config.data.category
     
     def __call__(self, task, expert_answers, ground_truth):

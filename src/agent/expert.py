@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 class Expert(BaseAgent):
     def __init__(self, config, expert_id, train_data=None, eval_data=None):
-        super().__init__(config)
+        super().__init__(config, "expert")
         self.expert_id = expert_id
         if self.config.data.category == "summarization":
             self.default_prompt = "Summarize this conversation:\n\n{}\n\n"
@@ -25,13 +25,13 @@ class Expert(BaseAgent):
         self.train_data = train_data
         self.eval_data = eval_data
 
-        if self.config.agent.type == "causal":
+        if self.config.experts.type == "causal":
             target_modules = ["q_proj", "v_proj"]
         else:
             target_modules = ["q", "v"] # ["q" "v", "k", "o"]
 
         self.lora_config = LoraConfig(
-            task_type=TaskType.CAUSAL_LM if self.config.agent.type == "causal" else TaskType.SEQ_2_SEQ_LM,
+            task_type=TaskType.CAUSAL_LM if self.config.experts.type == "causal" else TaskType.SEQ_2_SEQ_LM,
             r=config.lora.r,
             lora_alpha=config.lora.lora_alpha,
             lora_dropout=config.lora.lora_dropout,

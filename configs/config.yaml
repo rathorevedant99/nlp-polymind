@@ -1,9 +1,17 @@
 mode: dev # Set to dev when testing, otherwise set to prod
 
-agent:
+critic:
+  type: "causal"
+  name: "HuggingFaceTB/SmolLM2-135M"
+  device: cpu
+
+experts:
+  num_experts: 2
   type: "seq2seq" # causal
   name: "google/flan-t5-small" # HuggingFaceTB/SmolLM2-135M
   device: cpu
+  debate_rounds: 3
+  feedback_size: 2
 
 model_params:
   max_new_tokens: 256
@@ -12,11 +20,6 @@ model_params:
   top_p: 0.9
   num_return_sequences: 1
   min_new_tokens: 10
-
-experts:
-  num_experts: 2
-  debate_rounds: 3
-  feedback_size: 2
 
 lora:
   enabled: true
