@@ -10,10 +10,10 @@ class Data:
     def __init__(self, config: dict):
         self.config = config
         self.data_category = config.data.category
-        self.model_name = config.agent.name
+        self.model_name = config.experts.name
         self.dataset_name = config.data.name
         self.split = config.data.split
-        self.device = config.agent.device
+        self.device = config.experts.device
         self.data_cache_dir = config.data.data_cache_dir
         self._tokenized = False
 
@@ -36,6 +36,27 @@ class Data:
             inputs = [f"Solve the given math problem:\n\n{ex}\n\n" for ex in examples['question']]
             targets = [ex + self.tokenizer.eos_token for ex in examples['answer']]
         
+            model_inputs = self.tokenizer(
+                inputs,
+                max_length=max_input_length,
+                truncation=True,
+                padding="max_length"
+            )
+
+            # For seq2seq models, we need to set the decoder_input_ids
+            with self.tokenizer.as_target_tokenizer():
+                labels = self.tokenizer(
+                    targets,
+                    max_length=max_target_length,
+                    truncation=True,
+                    padding="max_length"
+                )["input_ids"]
+
+            if self.config.experts.type == "causal":
+                labels = [label[1:] + [-100] for label in labels]
+
+            model_inputs["labels"] = labels
+            return model_inputs
         else:
             raise ValueError(f"Invalid dataset name: {self.dataset_name}")
         

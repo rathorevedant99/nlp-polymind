@@ -7,7 +7,7 @@ from omegaconf import DictConfig
 from src.agent.expert import Expert
 from src.agent.team import ExpertTeam
 from src.agent.critic import Critic
-from src.data import Data
+from src.utils.arranger import Arranger
 from src.eval import Debate
 import logging
 
@@ -19,30 +19,30 @@ def main(config: DictConfig):
     """
     Loads the config and runs the experiment.
     """
-    data = Data(config)
-    dataset = data.get_tokenized_data()
-    train_data = dataset["train"]
-    eval_data = dataset["validation"]
-    test_data = dataset["test"]
+    arranger = Arranger(config)
+    expert_datasets, eval_data, test_data = arranger.create_datasets()
 
-    logger.debug(f"Train data size: {len(train_data)}")
-    logger.debug(f"Eval data size: {len(eval_data)}")
-    logger.debug(f"Test data size: {len(test_data)}")
+    # logger.info(f"First row of expert 0: {expert_datasets[0][0]}")
+    # logger.info(f"First row of expert 1: {expert_datasets[1][0]}")
+    expert = Expert(config, 3, expert_datasets[0], eval_data)
+    # expert.fine_tune_std_lora(save=False)
+    critic = Critic(config)
 
-    expert = Expert(config, 0, train_data, eval_data)
-    expert.fine_tune_std_lora(save=False)
+    print(expert.model)
+    print('--------------------------------')
+    print(critic.model)
 
-    truncated_eval_data = eval_data.select(range(5))
-    truncated_test_data = test_data.select(range(5))
+    # truncated_eval_data = eval_data.select(range(2))
+    # truncated_test_data = test_data.select(range(2))
 
 
-    for task_set in truncated_eval_data:
-        task = task_set["dialogue"]
-        ground_truth = task_set["summary"]
-        answer = expert.generate(task)
-        logger.info(f"Task: {task}")
-        logger.info(f"Ground truth: {ground_truth}")
-        logger.info(f"Answer: {answer}")
+    # for task_set in truncated_eval_data:
+    #     task = task_set["dialogue"]
+    #     ground_truth = task_set["summary"]
+    #     answer = expert.generate(task)
+    #     # logger.info(f"Task: {task}")
+    #     # logger.info(f"Ground truth: {ground_truth}")
+    #     logger.info(f"Answer: {answer}")
 
 
 if __name__ == "__main__":
