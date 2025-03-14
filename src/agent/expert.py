@@ -105,7 +105,8 @@ class Expert(BaseAgent):
             str: Generated expert answer
         """
         # Use the same prompt format as in training
-        expert_prompt = f"Summarize this conversation:\n\n{task}\n\n"
+        # expert_prompt = f"Summarize this conversation:\n\n{task}\n\n"
+        expert_prompt = f"Solve the given math problem:\n\n{task}\n\n"
 
         logger.info(f"Prompt to expert: {expert_prompt}")
         

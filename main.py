@@ -22,8 +22,17 @@ def main(config: DictConfig):
     """
     data = Data(config)
     dataset = data.get_tokenized_data()
-    train_data = dataset["train"]
-    eval_data = dataset["validation"]
+    
+    if config.data.name == "samsum":
+        train_data = dataset["train"]
+        eval_data = dataset["validation"]
+    elif config.data.name == "gsm8k":
+        train_data = dataset["train"].train_test_split(test_size=0.1)
+        train_data = train_data["train"]
+        eval_data = dataset["test"]
+    else:
+        raise ValueError(f"Invalid dataset name: {config.dataset_name}")
+    
     test_data = dataset["test"]
 
     logger.debug(f"Train data size: {len(train_data)}")
@@ -60,8 +69,15 @@ def main(config: DictConfig):
     logger.info("Starting debate")
 
     for task_set in truncated_eval_data:
-        task = task_set["dialogue"]
-        ground_truth = task_set["summary"]
+        if config.data.name == "samsum":
+            task = task_set["dialogue"]
+            ground_truth = task_set["summary"]
+        elif config.data.name == "gsm8k":
+            task = task_set["question"]
+            ground_truth = task_set["answer"]
+        else:
+            raise ValueError(f"Invalid dataset name: {config.dataset_name}")
+        
         debate.execute_debate(task, ground_truth)
     
     logger.info("Debate completed")
@@ -69,8 +85,15 @@ def main(config: DictConfig):
     logger.info("Evaluating first answers for unseen data")
 
     for task_set in truncated_test_data:
-        task = task_set["dialogue"]
-        ground_truth = task_set["summary"]
+        if config.data.name == "samsum":
+            task = task_set["dialogue"]
+            ground_truth = task_set["summary"]
+        elif config.data.name == "gsm8k":
+            task = task_set["question"]
+            ground_truth = task_set["answer"]
+        else:
+            raise ValueError(f"Invalid dataset name: {config.dataset_name}")
+        
         expert_answer = debate.get_final_answer(task)
         # logger.info(f"Task: {task}")
         logger.info(f"Ground truth: {ground_truth}")

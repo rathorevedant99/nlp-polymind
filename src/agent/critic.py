@@ -40,10 +40,7 @@ class Critic(BaseAgent):
 
         instruction = (
             "You are a critic. You have been given a list of answers by various experts, "
-            "along with the ground truth for the given task. You have to evaluate them and "
-            "return your answer in the following format: "
-            "'Best Expert: <BEST_EXPERT>'"
-            "Reasoning: <REASONING>"
+            "along with the ground truth for the given task."
         )
 
         prompt = f"{instruction}\n\nTask: {task}\n\nExpert Answers:\n\n"
@@ -52,19 +49,21 @@ class Critic(BaseAgent):
 
         prompt += f"Ground Truth: {ground_truth}\n\nAnswer:"
 
+        prompt += "You have to evaluate the answers provided by the experts and return the expert with the best answer."
+
         logger.info(f"Prompt to critic: {prompt}")
 
         tokenized_prompt = self.tokenizer(prompt, return_tensors="pt", truncation=True, padding=True)
 
-        model = AutoModelForSeq2SeqLM.from_pretrained("google/flan-t5-xl")
-        tokenizer = AutoTokenizer.from_pretrained("google/flan-t5-xl")
+        # model = AutoModelForSeq2SeqLM.from_pretrained("google/flan-t5-xl")
+        # tokenizer = AutoTokenizer.from_pretrained("google/flan-t5-xl")
 
-        output = model.generate(
-            input_ids=tokenized_prompt["input_ids"].to(model.device),
-            attention_mask=tokenized_prompt["attention_mask"].to(model.device),  
-            pad_token_id=tokenizer.eos_token_id 
+        output = self.model.generate(
+            input_ids=tokenized_prompt["input_ids"].to(self.model.device),
+            attention_mask=tokenized_prompt["attention_mask"].to(self.model.device),  
+            pad_token_id=self.tokenizer.eos_token_id 
         )
-        decoded_output = tokenizer.decode(output[0], skip_special_tokens=True)
+        decoded_output = self.tokenizer.decode(output[0], skip_special_tokens=True)
         logger.info(f"Critic answer: {decoded_output}")
         return decoded_output
         # return self.tokenizer.decode(output[0], skip_special_tokens=True)

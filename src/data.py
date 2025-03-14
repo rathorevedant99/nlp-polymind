@@ -32,32 +32,46 @@ class Data:
             inputs = [f"Summarize this conversation:\n\n{ex}\n\n" for ex in examples['dialogue']]
             targets = [ex + self.tokenizer.eos_token for ex in examples['summary']]
             
-            model_inputs = self.tokenizer(
-                inputs,
-                max_length=max_input_length,
-                truncation=True,
-                padding="max_length"
-            )
-
-            # For seq2seq models, we need to set the decoder_input_ids
-            with self.tokenizer.as_target_tokenizer():
-                labels = self.tokenizer(
-                    targets,
-                    max_length=max_target_length,
-                    truncation=True,
-                    padding="max_length"
-                )["input_ids"]
-
-            if self.config.agent.type == "causal":
-                labels = [label[1:] + [-100] for label in labels]
-
-            model_inputs["labels"] = labels
-            return model_inputs
+        elif self.dataset_name == "gsm8k":
+            inputs = [f"Solve the given math problem:\n\n{ex}\n\n" for ex in examples['question']]
+            targets = [ex + self.tokenizer.eos_token for ex in examples['answer']]
+        
         else:
             raise ValueError(f"Invalid dataset name: {self.dataset_name}")
+        
+        model_inputs = self.tokenizer(
+            inputs,
+            max_length=max_input_length,
+            truncation=True,
+            padding="max_length"
+        )
+
+        # For seq2seq models, we need to set the decoder_input_ids
+        with self.tokenizer.as_target_tokenizer():
+            labels = self.tokenizer(
+                targets,
+                max_length=max_target_length,
+                truncation=True,
+                padding="max_length"
+            )["input_ids"]
+
+        if self.config.agent.type == "causal":
+            labels = [label[1:] + [-100] for label in labels]
+
+        model_inputs["labels"] = labels
+        return model_inputs
+        
+
+           
+
 
     def load_data(self):
-        self.data = load_dataset(self.dataset_name)
+        if self.dataset_name == "samsum":
+            self.data = load_dataset(self.dataset_name)
+        elif self.dataset_name == "gsm8k":
+            self.data = load_dataset(self.dataset_name, 'main')
+        else:
+            raise ValueError(f"Invalid dataset name: {self.dataset_name}")
 
     def tokenize_data(self, save=True):
         model_hash = hashlib.md5(self.model_name.encode()).hexdigest()
