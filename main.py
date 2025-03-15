@@ -44,7 +44,7 @@ def main(config: DictConfig):
 
     logger.info("Starting debate")
 
-    for task_set in truncated_eval_data:
+    for task_set in eval_data:
         if config.data.name == "samsum":
             task = task_set["dialogue"]
             ground_truth = task_set["summary"]
@@ -60,7 +60,7 @@ def main(config: DictConfig):
 
     logger.info("Evaluating first answers for unseen data")
 
-    for task_set in truncated_test_data:
+    for task_set in test_data:
         if config.data.name == "samsum":
             task = task_set["dialogue"]
             ground_truth = task_set["summary"]

@@ -6,6 +6,7 @@ Critic Class
 from src.agent.base import BaseAgent
 import logging
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +53,7 @@ class Critic(BaseAgent):
 
         prompt = f"{instruction}\n\n=== Task === {task}\n\n=== Expert Answers ===\n\n"
         for i, answer in enumerate(expert_answers):
-            prompt += f"Expert {i}: {answer}\n\n"
+            prompt += f"Expert {i}: {expert_answers[i]}\n\n"
 
         prompt += f"=== Ground Truth === \n {ground_truth}\n\n === Feedback ===\n"
 
@@ -68,9 +69,15 @@ class Critic(BaseAgent):
             max_length=512
         )
         critic_output = self.tokenizer.decode(output[0], skip_special_tokens=True)
-        print(f"Critic output: {critic_output}")
+        critic_output = critic_output.split("=== Feedback ===")[-1].strip()
+        matches = re.findall(r"Expert (\d+): (.+)", critic_output)
 
-        return critic_output
+        output_dict = {int(num): statement for num, statement in matches}
+        logger.info(f"Critic output: {output_dict}")
+        logger.info(f"Critic output completed: ")
+
+
+        return output_dict
 
 
 
