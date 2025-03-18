@@ -1,3 +1,4 @@
+
 """
 Author: Payal Agarwal
 Expert Class
@@ -113,14 +114,14 @@ class Expert(BaseAgent):
         """
         feedback_context = ""
         if len(self.feedback) > 0:
-            feedback_context = "Critic's feedback:\n\n"
+            # feedback_context = "Critic's feedback:\n\n"
             if len(self.feedback) > self.feedback_size:
                 feedback_context += "\n".join([f"- {feedback[self.expert_id]}" for feedback in self.feedback[-self.feedback_size:]])
             else:
                 feedback_context += "\n".join([f"- {feedback[self.expert_id]}" for feedback in self.feedback])
-            feedback_context += "\n\n Consider the above feedback while generating the response.\n\n"
+            feedback_context += "\n\n Consider the above information while generating the response.\n\n"
     
-        expert_prompt = feedback_context + self.default_prompt.format(task)
+        expert_prompt = self.default_prompt.format(task) + feedback_context
         logger.info(f"Expert prompt: {expert_prompt}")
         
         tokenized_prompt = self.tokenizer(expert_prompt, return_tensors="pt", truncation=True, padding=True, max_length=512)
@@ -131,7 +132,7 @@ class Expert(BaseAgent):
             output = self.model.generate(
                 input_ids=tokenized_prompt["input_ids"].to(self.model.device),
                 attention_mask=tokenized_prompt["attention_mask"].to(self.model.device),
-                pad_token_id=self.tokenizer.eos_token_id
+                pad_token_id=self.tokenizer.eos_token_id, max_length=2000
             )
 
         decoded_output = self.tokenizer.decode(output[0], skip_special_tokens=True)

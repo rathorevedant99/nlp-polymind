@@ -17,7 +17,7 @@ class BaseAgent:
         
         elif agent_type=="critic":
             if self.config.critic.type == "causal":
-                self.model = AutoModelForCausalLM.from_pretrained(self.config.critic.name)
+                self.model = AutoModelForCausalLM.from_pretrained(self.config.critic.name, attn_implementation='eager')
             elif self.config.critic.type == "seq2seq":
                 self.model = AutoModelForSeq2SeqLM.from_pretrained(self.config.critic.name)
 

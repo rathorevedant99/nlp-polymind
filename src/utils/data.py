@@ -76,7 +76,7 @@ class Data:
                 padding="max_length"
             )["input_ids"]
 
-        if self.config.agent.type == "causal":
+        if self.config.experts.type == "causal":
             labels = [label[1:] + [-100] for label in labels]
 
         model_inputs["labels"] = labels
