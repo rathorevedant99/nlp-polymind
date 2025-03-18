@@ -8,6 +8,7 @@ from src.agent.team import ExpertTeam
 from src.agent.critic import Critic
 from src.utils.data import Data
 from src.utils.arranger import Arranger
+from src.utils.plotmetrics import Plotter
 from src.eval import Debate
 import logging
 
@@ -57,6 +58,9 @@ def main(config: DictConfig):
         debate.execute_debate(task, ground_truth)
     
     logger.info("Debate completed")
+
+    plotter = Plotter(debate.metric_dict)
+    plotter()
 
     logger.info("Evaluating first answers for unseen data")
 

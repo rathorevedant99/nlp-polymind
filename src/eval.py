@@ -1,5 +1,6 @@
 from src.agent.team import ExpertTeam
 from src.agent.critic import Critic
+from src.metrics import Metrics
 from typing import List, Dict
 import logging
 
@@ -11,6 +12,7 @@ class Debate:
         self.debate_rounds = config.experts.debate_rounds
         self.expert_team = expert_team
         self.critic = critic
+        self.metric_dict = {}
         self._have_debated = False
         
         if not isinstance(expert_team, ExpertTeam):
@@ -23,6 +25,7 @@ class Debate:
         """
         Execute a debate between the experts and the critic.
         """
+        metrics = Metrics()
         self.first_answer = self.expert_team.get_expert_answers(task)
         for round in range(self.debate_rounds):
             logger.info(f"Debate round {round+1} started")
@@ -33,6 +36,13 @@ class Debate:
             for expert in self.expert_team.experts:
                 expert.update(critic_answer)
 
+            rouge_scores, bertscore_scores, novelty_scores, length_ratios = metrics(ground_truth, expert_answers)
+            self.metric_dict[f"round_{round+1}"] = {
+                "rouge_scores": rouge_scores,
+                "bertscore_scores": bertscore_scores,
+                "novelty_scores": novelty_scores,
+                "length_ratios": length_ratios
+            }
             logger.info(f"Debate round {round+1} completed")
         
         self._have_debated = True
@@ -46,7 +56,7 @@ class Debate:
         self.expert_answers = self.expert_team.get_expert_answers(task)
         return self.expert_answers
     
-    def get_first_answer(self, task: str):
+    def get_first_answer(self):
         """
         Get the first answer from the experts.
         """

@@ -8,9 +8,9 @@ critic:
 experts:
   num_experts: 2
   type: "seq2seq" # causal
-  name: "google/flan-t5-large" # HuggingFaceTB/SmolLM2-135M
+  name: "google/flan-t5-small" # HuggingFaceTB/SmolLM2-135M
   device: cpu
-  debate_rounds: 3
+  debate_rounds: 1
   feedback_size: 2
 
 model_params:
