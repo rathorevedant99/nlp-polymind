@@ -28,7 +28,7 @@ class Debate:
             logger.info(f"Debate round {round+1} started")
             expert_answers = self.expert_team.get_expert_answers(task)
             critic_answer = self.critic(task, expert_answers, ground_truth)
-            logger.info(f"Critic answer: {critic_answer}")
+            # logger.info(f"Critic answer: {critic_answer}")
             
             for expert in self.expert_team.experts:
                 expert.update(critic_answer)

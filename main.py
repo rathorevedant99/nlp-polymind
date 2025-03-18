@@ -45,8 +45,15 @@ def main(config: DictConfig):
     logger.info("Starting debate")
 
     for task_set in eval_data:
-        task = task_set["dialogue"]
-        ground_truth = task_set["summary"]
+        if config.data.name == "samsum":
+            task = task_set["dialogue"]
+            ground_truth = task_set["summary"]
+        elif config.data.name == "gsm8k":
+            task = task_set["question"]
+            ground_truth = task_set["answer"]
+        else:
+            raise ValueError(f"Invalid dataset name: {config.dataset_name}")
+        
         debate.execute_debate(task, ground_truth)
     
     logger.info("Debate completed")
@@ -54,8 +61,15 @@ def main(config: DictConfig):
     logger.info("Evaluating first answers for unseen data")
 
     for task_set in test_data:
-        task = task_set["dialogue"]
-        ground_truth = task_set["summary"]
+        if config.data.name == "samsum":
+            task = task_set["dialogue"]
+            ground_truth = task_set["summary"]
+        elif config.data.name == "gsm8k":
+            task = task_set["question"]
+            ground_truth = task_set["answer"]
+        else:
+            raise ValueError(f"Invalid dataset name: {config.dataset_name}")
+        
         expert_answer = debate.get_final_answer(task)
         logger.info(f"Ground truth: {ground_truth}")
         logger.info(f"Expert answer: {expert_answer}")

@@ -2,13 +2,13 @@ mode: dev # Set to dev when testing, otherwise set to prod
 
 critic:
   type: "causal"
-  name: "HuggingFaceTB/SmolLM2-135M"
+  name: "google/gemma-2-2b-it"
   device: cpu
 
 experts:
   num_experts: 2
   type: "seq2seq" # causal
-  name: "google/flan-t5-small" # HuggingFaceTB/SmolLM2-135M
+  name: "google/flan-t5-large" # HuggingFaceTB/SmolLM2-135M
   device: cpu
   debate_rounds: 3
   feedback_size: 2
@@ -44,6 +44,8 @@ training:
 
 data:
   data_cache_dir: "./data/cache"
+  # category: "math"
+  # name: "gsm8k"
   category: "summarization" # "summarization" or "math"
   name: "samsum"
   split: ["train[:10%]+validation[:5%]+test[:5%]"]

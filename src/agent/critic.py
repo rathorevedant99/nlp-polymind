@@ -4,6 +4,11 @@ Critic Class
 """
 
 from src.agent.base import BaseAgent
+import logging
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+import re
+
+logger = logging.getLogger(__name__)
 
 class Critic(BaseAgent):
     def __init__(self, config):
@@ -41,29 +46,44 @@ class Critic(BaseAgent):
         #     "constructive feedback to the experts. Keep it short and concise."
         # )
 
-        instruction = f"""For this {self.task_type} task, compare the expert answers to the ground truth.
-            What could be improved in each answer?
-            Focus on {self.task_type}-specific feedback.
-            Be brief and specific."""
+        # logger.info(f"Model:{self.model}")
 
-        prompt = f"{instruction}\n\n=== Task === {task}\n\n=== Expert Answers ===\n\n"
+        instruction = f"""As a feedback provider, compare the provided expert answers with the provided ground truth.
+            Give a one lined feedback on what could be improved in each expert answer to make it closer to the ground truth.
+        """
+
+        prompt = f"{instruction}\n\n=== Expert Answers ===\n\n"
         for i, answer in enumerate(expert_answers):
-            prompt += f"Expert {i}: {answer}\n\n"
+            prompt += f"Expert {i}: {expert_answers[i]}\n\n"
 
-        prompt += f"=== Ground Truth === \n {ground_truth}\n\n === Feedback ===\n"
-
+        prompt += f"=== Ground Truth === \n {ground_truth}\n\n === Provide Feedback ===\n"
+        prompt += f"Provide a maximum of one line feedback for the experts here. \n"
+        # for i in range(len(expert_answers)):
+        #     prompt += f"Feedback for Expert {i}:  <YOUR FEEdBACK>\n\n"
+        logger.info(f"Prompt to Critic: {prompt}")
         tokenized_prompt = self.tokenizer(prompt, return_tensors="pt", padding=True)
+        
+
+        # model = AutoModelForSeq2SeqLM.from_pretrained("google/flan-t5-xl")
+        # tokenizer = AutoTokenizer.from_pretrained("google/flan-t5-xl")
 
         output = self.model.generate(
             input_ids=tokenized_prompt["input_ids"].to(self.model.device),
             attention_mask=tokenized_prompt["attention_mask"].to(self.model.device),  
-            pad_token_id=self.tokenizer.eos_token_id,
-            max_length=512
+            pad_token_id=self.tokenizer.eos_token_id, max_length=512
         )
         critic_output = self.tokenizer.decode(output[0], skip_special_tokens=True)
-        print(f"Critic output: {critic_output}")
+        
+        critic_output = critic_output.split("=== Feedback ===")[-1].strip()
+        logger.info(f"critic output whole: {critic_output}")
+        matches = re.findall(r"Expert (\d+): (.+)", critic_output)
 
-        return critic_output
+        output_dict = {int(num): statement for num, statement in matches}
+        logger.info(f"Critic output: {output_dict}")
+        logger.info(f"Critic output completed: ")
+
+
+        return output_dict
 
 
 
