@@ -35,3 +35,10 @@ class ExpertTeam:
         for expert in self.experts:
             model_answers[expert.expert_id] = expert.generate(task)
         return model_answers
+
+    def reset_feedback(self):
+        """
+        Reset the feedback for all experts.
+        """
+        for expert in self.experts:
+            expert.reset_feedback()

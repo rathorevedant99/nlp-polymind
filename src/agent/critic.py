@@ -60,7 +60,7 @@ class Critic(BaseAgent):
         prompt += f"Provide a maximum of one line feedback for the experts here. \n"
         # for i in range(len(expert_answers)):
         #     prompt += f"Feedback for Expert {i}:  <YOUR FEEdBACK>\n\n"
-        logger.info(f"Prompt to Critic: {prompt}")
+        # logger.info(f"Prompt to Critic: {prompt}")
         tokenized_prompt = self.tokenizer(prompt, return_tensors="pt", padding=True)
         
 
@@ -70,17 +70,19 @@ class Critic(BaseAgent):
         output = self.model.generate(
             input_ids=tokenized_prompt["input_ids"].to(self.model.device),
             attention_mask=tokenized_prompt["attention_mask"].to(self.model.device),  
-            pad_token_id=self.tokenizer.eos_token_id, max_length=512
+            pad_token_id=self.tokenizer.eos_token_id, max_length=1024
         )
         critic_output = self.tokenizer.decode(output[0], skip_special_tokens=True)
         
-        critic_output = critic_output.split("=== Feedback ===")[-1].strip()
-        logger.info(f"critic output whole: {critic_output}")
-        matches = re.findall(r"Expert (\d+): (.+)", critic_output)
 
-        output_dict = {int(num): statement for num, statement in matches}
-        logger.info(f"Critic output: {output_dict}")
-        logger.info(f"Critic output completed: ")
+        try:
+            critic_output = critic_output.split("=== Provide Feedback ===")[-1].strip()
+            matches = re.findall(r"Expert (\d+): (.+)", critic_output)
+            output_dict = {int(num): statement for num, statement in matches}
+        except:
+            output_dict = {int(i): "" for i in range(len(expert_answers))}
+        # logger.info(f"Critic output: {output_dict}")
+        # logger.info(f"Critic output completed: ")
 
 
         return output_dict

@@ -1,4 +1,3 @@
-
 """
 Author: Payal Agarwal
 Expert Class
@@ -122,9 +121,9 @@ class Expert(BaseAgent):
             feedback_context += "\n\n Consider the above information while generating the response.\n\n"
     
         expert_prompt = self.default_prompt.format(task) + feedback_context
-        logger.info(f"Expert prompt: {expert_prompt}")
+        # logger.info(f"Expert prompt: {expert_prompt}")
         
-        tokenized_prompt = self.tokenizer(expert_prompt, return_tensors="pt", truncation=True, padding=True, max_length=512)
+        tokenized_prompt = self.tokenizer(expert_prompt, return_tensors="pt", padding=True)
         
         self.model.eval()
         
@@ -132,11 +131,17 @@ class Expert(BaseAgent):
             output = self.model.generate(
                 input_ids=tokenized_prompt["input_ids"].to(self.model.device),
                 attention_mask=tokenized_prompt["attention_mask"].to(self.model.device),
-                pad_token_id=self.tokenizer.eos_token_id, max_length=2000
+                pad_token_id=self.tokenizer.eos_token_id,
+                max_new_tokens=self.config.model_params.max_new_tokens,
+                temperature=self.config.model_params.temperature,
+                do_sample=self.config.model_params.do_sample,
+                top_p=self.config.model_params.top_p,
+                num_return_sequences=self.config.model_params.num_return_sequences,
+                min_new_tokens=self.config.model_params.min_new_tokens
             )
 
         decoded_output = self.tokenizer.decode(output[0], skip_special_tokens=True)
-        logger.info(f"Expert {self.expert_id} answer: {decoded_output}")
+        # logger.info(f"Expert {self.expert_id} answer: {decoded_output}")
         
         return decoded_output
     
@@ -145,3 +150,9 @@ class Expert(BaseAgent):
         Update the expert's feedback.
         """
         self.feedback.append(feedback)
+
+    def reset_feedback(self):
+        """
+        Reset the expert's feedback.
+        """
+        self.feedback = []

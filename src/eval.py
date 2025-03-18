@@ -23,12 +23,14 @@ class Debate:
         """
         Execute a debate between the experts and the critic.
         """
+        self.expert_team.reset_feedback()
         self.first_answer = self.expert_team.get_expert_answers(task)
         for round in range(self.debate_rounds):
             logger.info(f"Debate round {round+1} started")
             expert_answers = self.expert_team.get_expert_answers(task)
+            logger.info(f"Expert answers: {expert_answers}")
             critic_answer = self.critic(task, expert_answers, ground_truth)
-            # logger.info(f"Critic answer: {critic_answer}")
+            logger.info(f"Critic answer: {critic_answer}")
             
             for expert in self.expert_team.experts:
                 expert.update(critic_answer)
