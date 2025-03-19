@@ -6,10 +6,10 @@ from omegaconf import DictConfig
 from src.agent.expert import Expert
 from src.agent.team import ExpertTeam
 from src.agent.critic import Critic
-from src.utils.data import Data
 from src.utils.arranger import Arranger
 from src.utils.plotmetrics import Plotter
 from src.eval import Debate
+import random
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -20,6 +20,7 @@ def main(config: DictConfig):
     """
     Loads the config and runs the experiment.
     """
+    hydra_output_path = hydra.core.hydra_config.HydraConfig.get().runtime.output_dir
     arranger = Arranger(config)
     expert_datasets, eval_data, test_data = arranger.create_datasets()
 
@@ -45,20 +46,20 @@ def main(config: DictConfig):
 
     logger.info("Starting debate")
 
-    for task_set in eval_data:
-        if config.data.name == "samsum":
-            tasks = [task_set["dialogue"] for task_set in eval_data]
-            ground_truths = [task_set["summary"] for task_set in eval_data]
-        elif config.data.name == "gsm8k":
-            tasks = [task_set["question"] for task_set in eval_data]
-            ground_truths = [task_set["answer"] for task_set in eval_data]
-        else:
-            raise ValueError(f"Invalid dataset name: {config.dataset_name}")
+    shuffled_eval_data = eval_data.shuffle()
+    if config.data.name == "samsum":
+        tasks = [task_set["dialogue"] for task_set in shuffled_eval_data]
+        ground_truths = [task_set["summary"] for task_set in shuffled_eval_data]
+    elif config.data.name == "gsm8k":
+        tasks = [task_set["question"] for task_set in shuffled_eval_data]
+        ground_truths = [task_set["answer"] for task_set in shuffled_eval_data]
+    else:
+        raise ValueError(f"Invalid dataset name: {config.dataset_name}")
         
     debate.execute_debate(tasks, ground_truths)
 
     plotter = Plotter(debate.metric_dict)
-    plotter()
+    plotter(hydra_output_path)
 
     # logger.info("Evaluating first answers for unseen data")
 

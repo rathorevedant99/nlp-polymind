@@ -1,30 +1,30 @@
 import matplotlib.pyplot as plt
-
+import os
 class Plotter:
     def __init__(self, metrics: dict):
         self.metrics = metrics
         self.num_debate_rounds = len(metrics)
         
-        # Extract ROUGE f-measure scores
-        self.rouge_scores = [self.metrics[f"{i+1}"]["rouge_scores"]["rouge1"].fmeasure 
+        self.rouge1_scores = [self.metrics[f"{i+1}"]["rouge_scores"]["rouge1"].fmeasure 
+                           for i in range(self.num_debate_rounds)]
+        self.rouge2_scores = [self.metrics[f"{i+1}"]["rouge_scores"]["rouge2"].fmeasure 
+                           for i in range(self.num_debate_rounds)]
+        self.rougeL_scores = [self.metrics[f"{i+1}"]["rouge_scores"]["rougeL"].fmeasure 
                            for i in range(self.num_debate_rounds)]
         
-        # Extract BERTScore F1 scores (third tensor)
         self.bertscore_scores = [float(self.metrics[f"{i+1}"]["bertscore_scores"][2]) 
                                 for i in range(self.num_debate_rounds)]
         
-        # Extract average novelty scores (average of keys 0 and 1)
         self.novelty_scores = [sum(self.metrics[f"{i+1}"]["novelty_scores"].values()) / 2 
                               for i in range(self.num_debate_rounds)]
         
-        # Extract average length ratios (average of keys 0 and 1)
         self.length_ratios = [sum(self.metrics[f"{i+1}"]["length_ratios"].values()) / 2 
                              for i in range(self.num_debate_rounds)]
 
-    def __call__(self):
-        self.plot_all_metrics()
+    def __call__(self, save_path: str = None):
+        self.plot_all_metrics(save_path)
     
-    def plot_all_metrics(self):
+    def plot_all_metrics(self, save_path: str = None):
         plt.figure(figsize=(15, 10))
         
         plt.subplot(2, 2, 1)
@@ -40,14 +40,19 @@ class Plotter:
         self.plot_length_ratios()
         
         plt.tight_layout()
+        if save_path:
+            plt.savefig(os.path.join(save_path, "metrics.png"))
         plt.show()
         
     def plot_rouge_scores(self):
         rounds = list(range(1, self.num_debate_rounds + 1))
-        plt.plot(rounds, self.rouge_scores, marker='o')
-        plt.title('ROUGE-1 F1 Scores')
+        plt.plot(rounds, self.rouge1_scores, marker='o', label='ROUGE-1 F1')
+        plt.plot(rounds, self.rouge2_scores, marker='o', label='ROUGE-2 F1')
+        plt.plot(rounds, self.rougeL_scores, marker='o', label='ROUGE-L F1')
+        plt.title('ROUGE Scores')
         plt.xlabel('Debate Round')
         plt.ylabel('Score')
+        plt.legend()
         plt.grid(True)
 
     def plot_bertscore_scores(self):
