@@ -1,3 +1,4 @@
+
 """
 Author: Payal Agarwal
 Expert Class
@@ -7,27 +8,36 @@ from peft import get_peft_model, LoraConfig, TaskType
 from transformers import DataCollatorForLanguageModeling, Trainer, TrainingArguments
 import os
 import logging
-import hashlib
+import torch
 
 logger = logging.getLogger(__name__)
 
 class Expert(BaseAgent):
     def __init__(self, config, expert_id, train_data=None, eval_data=None):
-        super().__init__(config)
+        super().__init__(config, "expert")
         self.expert_id = expert_id
+        if self.config.data.category == "summarization":
+            self.default_prompt = "Summarize this conversation:\n\n{}\n\n"
+        elif self.config.data.category == "math":
+            self.default_prompt = "Solve this math problem:\n\n{}\n\n"
+        else:
+            raise ValueError(f"Unsupported data category: {self.config.data.category}")
 
         self.train_data = train_data
         self.eval_data = eval_data
 
-        ## Adding this explicitly since Hydraconfig makes the target_modules non JSON serializable
-        target_modules = list(config.lora.target_modules) if config.lora.target_modules else None 
+        if self.config.experts.type == "causal":
+            target_modules = ["q_proj", "v_proj"]
+        else:
+            target_modules = ["q", "v"] # ["q" "v", "k", "o"]
 
         self.lora_config = LoraConfig(
-            task_type=TaskType.SEQ_2_SEQ_LM,
+            task_type=TaskType.CAUSAL_LM if self.config.experts.type == "causal" else TaskType.SEQ_2_SEQ_LM,
             r=config.lora.r,
             lora_alpha=config.lora.lora_alpha,
             lora_dropout=config.lora.lora_dropout,
-            target_modules=target_modules
+            target_modules=target_modules,
+            bias=config.lora.bias
         )
 
         if config.lora.enabled:
@@ -39,6 +49,7 @@ class Expert(BaseAgent):
         self.training_args = TrainingArguments(**config.training)
 
         self.feedback = []
+        self.feedback_size = config.experts.feedback_size
     
     def fine_tune_unsloth(self):
         """
@@ -101,20 +112,38 @@ class Expert(BaseAgent):
         Returns:
             str: Generated expert answer
         """
-        expert_prompt = f"You are an expert. Provide a detailed and accurate answer to the following task:\n\nTask: {task}\n\nAnswer:"
+        feedback_context = ""
+        if len(self.feedback) > 0:
+            if len(self.feedback) > self.feedback_size:
+                feedback_context += "\n".join([f"- {feedback[self.expert_id]}" for feedback in self.feedback[-self.feedback_size:]])
+            else:
+                feedback_context += "\n".join([f"- {feedback[self.expert_id]}" for feedback in self.feedback])
+            feedback_context += "\n\n Consider the above information while generating the response.\n\n"
+    
+        expert_prompt = self.default_prompt.format(task) + feedback_context
+        logger.debug(f"Expert prompt: {expert_prompt}")
         
-        tokenized_prompt = self.tokenizer(expert_prompt.format(task), return_tensors="pt", truncation=True, padding=True)
-        output = self.model.generate(
-            input_ids=tokenized_prompt["input_ids"].to(self.model.device),
-            attention_mask=tokenized_prompt["attention_mask"].to(self.model.device),  
-            pad_token_id=self.tokenizer.eos_token_id,
-            max_new_tokens=128
-        )
+        tokenized_prompt = self.tokenizer(expert_prompt, return_tensors="pt", truncation=True, padding=True, max_length=512)
         
-        return self.tokenizer.decode(output[0], skip_special_tokens=True)
+        self.model.eval()
+        
+        with torch.no_grad():
+            output = self.model.generate(
+                input_ids=tokenized_prompt["input_ids"].to(self.model.device),
+                attention_mask=tokenized_prompt["attention_mask"].to(self.model.device),
+                pad_token_id=self.tokenizer.eos_token_id, max_length=2000
+            )
+
+        decoded_output = self.tokenizer.decode(output[0], skip_special_tokens=True)
+        logger.info(f"Expert {self.expert_id} answer: {decoded_output}")
+        
+        return decoded_output
     
     def update(self, feedback):
         """
         Update the expert's feedback.
         """
-        self.feedback.append(feedback)
+        relevant_feedback = {k: v for k, v in feedback.items() if k == self.expert_id}
+        logger.info(f"Relevant feedback: {relevant_feedback}")
+        relevant_feedback = relevant_feedback[self.expert_id]
+        self.feedback.append(relevant_feedback)

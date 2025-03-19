@@ -1,37 +1,51 @@
 mode: dev # Set to dev when testing, otherwise set to prod
 
-agent:
-  type: causal
-  name: HuggingFaceTB/SmolLM2-135M
+critic:
+  type: "seq2seq"
+  name: "google/flan-t5-base" # "google/gemma-2-2b-it"
   device: cpu
 
 experts:
   num_experts: 2
-  debate_rounds: 3
+  type: "seq2seq" # causal
+  name: "google/flan-t5-small" # HuggingFaceTB/SmolLM2-135M
+  device: cpu
+  debate_rounds: 5
+  feedback_size: 2
+
+model_params:
+  max_new_tokens: 256
+  temperature: 0.7
+  do_sample: true
+  top_p: 0.9
+  num_return_sequences: 1
+  min_new_tokens: 10
 
 lora:
   enabled: true
-  r: 16
-  lora_alpha: 32
+  r: 8
+  lora_alpha: 16
   lora_dropout: 0.1
-  target_modules: ["q_proj", "v_proj"]
+  bias: "none"
 
 training:
   output_dir: "./results"
-  evaluation_strategy: "steps"
+  eval_strategy: "steps"
   save_strategy: "no"
   per_device_train_batch_size: 1
   per_device_eval_batch_size: 1
   gradient_accumulation_steps: 4
   eval_accumulation_steps: 4
-  eval_steps: 100
-  max_steps: 20
-  logging_steps: 250
-  learning_rate: 1e-4
+  eval_steps: 200
+  max_steps: 200
+  logging_steps: 20
+  learning_rate: 1e-5
   weight_decay: 0.01
 
 data:
   data_cache_dir: "./data/cache"
-  category: "summarization"
+  # category: "math"
+  # name: "gsm8k"
+  category: "summarization" # "summarization" or "math"
   name: "samsum"
   split: ["train[:10%]+validation[:5%]+test[:5%]"]

@@ -12,6 +12,9 @@ class ExpertTeam:
         if not all(isinstance(expert, Expert) for expert in self.experts):
             raise ValueError("All experts must be instances of Expert class")
     
+    def __call__(self, task):
+        return self.get_expert_answers(task)
+    
     def add_expert(self, expert):
         """
         Add an expert to the team.
@@ -26,7 +29,7 @@ class ExpertTeam:
         Args:
             task (str): Task description
         Returns:
-            List[str]: List containing answers from both experts
+            model_answers (dict): Dictionary containing answers from all experts
         """
         model_answers = {}
         for expert in self.experts:
