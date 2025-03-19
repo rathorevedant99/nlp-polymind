@@ -7,6 +7,7 @@ from src.agent.base import BaseAgent
 import logging
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 import re
+import torch
 
 logger = logging.getLogger(__name__)
 
@@ -14,6 +15,8 @@ class Critic(BaseAgent):
     def __init__(self, config):
         super().__init__(config, "critic")
         self.task_type = config.data.category
+        self.device_available = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
+        self.model.to(self.device_available)
     
     def __call__(self, task, expert_answers, ground_truth):
         """
@@ -57,32 +60,45 @@ class Critic(BaseAgent):
             prompt += f"Expert {i}: {expert_answers[i]}\n\n"
 
         prompt += f"=== Ground Truth === \n {ground_truth}\n\n === Provide Feedback ===\n"
-        prompt += f"Provide a maximum of one line feedback for the experts here. \n"
-        # for i in range(len(expert_answers)):
-        #     prompt += f"Feedback for Expert {i}:  <YOUR FEEdBACK>\n\n"
+        # prompt += f"Provide a maximum of one line feedback for the experts here. \n"
+
         logger.info(f"Prompt to Critic: {prompt}")
         tokenized_prompt = self.tokenizer(prompt, return_tensors="pt", padding=True)
-        
-
-        # model = AutoModelForSeq2SeqLM.from_pretrained("google/flan-t5-xl")
-        # tokenizer = AutoTokenizer.from_pretrained("google/flan-t5-xl")
+        tokenized_prompt = tokenized_prompt.to(self.device_available)
 
         output = self.model.generate(
-            input_ids=tokenized_prompt["input_ids"].to(self.model.device),
-            attention_mask=tokenized_prompt["attention_mask"].to(self.model.device),  
+            input_ids=tokenized_prompt["input_ids"],
+            attention_mask=tokenized_prompt["attention_mask"],  
             pad_token_id=self.tokenizer.eos_token_id, max_length=512
         )
         critic_output = self.tokenizer.decode(output[0], skip_special_tokens=True)
         
-        critic_output = critic_output.split("=== Feedback ===")[-1].strip()
+        critic_output = critic_output.split("=== Provide Feedback ===")[-1].strip()
         logger.info(f"critic output whole: {critic_output}")
-        matches = re.findall(r"Expert (\d+): (.+)", critic_output)
+        
+        expert_segments = critic_output.split("Expert")[1:]
+        matches = []
+        
+        for segment in expert_segments:
+            if match := re.match(r'\s*(\d+)\s*:\s*([^E]+)', segment):
+                expert_num, feedback = match.groups()
+                matches.append((expert_num, feedback.strip()))
+        
+        logger.info(f"Matches: {matches}")
+        
+        if len(matches) == 0:
+            return {num: "No matches found in critic output" for num in range(len(expert_answers))}
 
-        output_dict = {int(num): statement for num, statement in matches}
+        output_dict = {int(num): statement.strip() for num, statement in matches}
+        
+        if len(output_dict) != len(expert_answers):
+            logger.warning(f"Missing feedback for some experts. Expected {len(expert_answers)}, got {len(output_dict)}")
+            for i in range(len(expert_answers)):
+                if i not in output_dict:
+                    output_dict[i] = "No feedback provided"
+
         logger.info(f"Critic output: {output_dict}")
-        logger.info(f"Critic output completed: ")
-
-
+        logger.debug(f"Critic output completed")
         return output_dict
 
 

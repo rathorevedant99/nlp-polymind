@@ -6,12 +6,14 @@ from rouge_score import rouge_scorer
 from bert_score import BERTScorer
 from nltk.corpus import stopwords
 import nltk
+import ssl
 
 class Metrics:
     def __init__(self):
         try:
             self.stop_words = set(stopwords.words('english'))
         except LookupError:
+            ssl._create_default_https_context = ssl._create_unverified_context
             nltk.download('stopwords')
             self.stop_words = set(stopwords.words('english'))
 
@@ -31,7 +33,8 @@ class Metrics:
         return rouge_scores, bertscore_scores, novelty_scores, length_ratios
 
     def eval_rouge(self, ground_truth: str, expert_answers: dict):
-        scorer = rouge_scorer.RougeScorer(['rouge1', 'rouge2', 'rougeL'], use_stemmer=True)
+        # scorer = rouge_scorer.RougeScorer(['rouge1', 'rouge2', 'rougeL'], use_stemmer=True)
+        scorer = rouge_scorer.RougeScorer(['rouge1'], use_stemmer=True)
         for expert_id, answer in expert_answers.items():
             scores = scorer.score(ground_truth, answer)
             print(f"Expert {expert_id} rouge scores: {scores}")

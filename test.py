@@ -9,6 +9,8 @@ from src.agent.team import ExpertTeam
 from src.agent.critic import Critic
 from src.utils.arranger import Arranger
 from src.eval import Debate
+from src.metrics import Metrics
+from src.utils.plotmetrics import Plotter
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -24,25 +26,33 @@ def main(config: DictConfig):
 
     # logger.info(f"First row of expert 0: {expert_datasets[0][0]}")
     # logger.info(f"First row of expert 1: {expert_datasets[1][0]}")
-    expert = Expert(config, 3, expert_datasets[0], eval_data)
-    # expert.fine_tune_std_lora(save=False)
-    critic = Critic(config)
+    expert0 = Expert(config, 0, expert_datasets[0], eval_data)
+    expert1 = Expert(config, 1, expert_datasets[1], eval_data)
+    metrics = Metrics()
+    metrics_dict = {}
 
-    print(expert.model)
-    print('--------------------------------')
-    print(critic.model)
+    expert_answers = {}
+    
+    for task in eval_data:
+        dialogue = task["dialogue"]
+        summary = task["summary"]
+        for i in range(2):
+            answer0 = expert0.generate(dialogue)
+            answer1 = expert1.generate(dialogue)
+            expert_answers[0] = answer0
+            expert_answers[1] = answer1
+            rouge_scores, bertscore_scores, novelty_scores, length_ratios = metrics(summary, expert_answers)
+            metrics_dict[i] = {
+                "rouge_scores": rouge_scores,
+                "bertscore_scores": bertscore_scores,
+                "novelty_scores": novelty_scores,
+                "length_ratios": length_ratios
+            }
+    logger.info(f"Metrics: {metrics_dict}")
 
-    # truncated_eval_data = eval_data.select(range(2))
-    # truncated_test_data = test_data.select(range(2))
+    plotter = Plotter(metrics_dict)
+    plotter()
 
-
-    # for task_set in truncated_eval_data:
-    #     task = task_set["dialogue"]
-    #     ground_truth = task_set["summary"]
-    #     answer = expert.generate(task)
-    #     # logger.info(f"Task: {task}")
-    #     # logger.info(f"Ground truth: {ground_truth}")
-    #     logger.info(f"Answer: {answer}")
 
 
 if __name__ == "__main__":

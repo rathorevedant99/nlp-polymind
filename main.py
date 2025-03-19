@@ -47,36 +47,34 @@ def main(config: DictConfig):
 
     for task_set in eval_data:
         if config.data.name == "samsum":
-            task = task_set["dialogue"]
-            ground_truth = task_set["summary"]
+            tasks = [task_set["dialogue"] for task_set in eval_data]
+            ground_truths = [task_set["summary"] for task_set in eval_data]
         elif config.data.name == "gsm8k":
-            task = task_set["question"]
-            ground_truth = task_set["answer"]
+            tasks = [task_set["question"] for task_set in eval_data]
+            ground_truths = [task_set["answer"] for task_set in eval_data]
         else:
             raise ValueError(f"Invalid dataset name: {config.dataset_name}")
         
-        debate.execute_debate(task, ground_truth)
-    
-    logger.info("Debate completed")
+    debate.execute_debate(tasks, ground_truths)
 
     plotter = Plotter(debate.metric_dict)
     plotter()
 
-    logger.info("Evaluating first answers for unseen data")
+    # logger.info("Evaluating first answers for unseen data")
 
-    for task_set in test_data:
-        if config.data.name == "samsum":
-            task = task_set["dialogue"]
-            ground_truth = task_set["summary"]
-        elif config.data.name == "gsm8k":
-            task = task_set["question"]
-            ground_truth = task_set["answer"]
-        else:
-            raise ValueError(f"Invalid dataset name: {config.dataset_name}")
+    # for task_set in test_data:
+    #     if config.data.name == "samsum":
+    #         task = task_set["dialogue"]
+    #         ground_truth = task_set["summary"]
+    #     elif config.data.name == "gsm8k":
+    #         task = task_set["question"]
+    #         ground_truth = task_set["answer"]
+    #     else:
+    #         raise ValueError(f"Invalid dataset name: {config.dataset_name}")
         
-        expert_answer = debate.get_final_answer(task)
-        logger.info(f"Ground truth: {ground_truth}")
-        logger.info(f"Expert answer: {expert_answer}")
+    #     expert_answer = debate.get_final_answer(task)
+    #     logger.info(f"Ground truth: {ground_truth}")
+    #     logger.info(f"Expert answer: {expert_answer}")
 
 
 if __name__ == "__main__":

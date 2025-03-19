@@ -21,31 +21,37 @@ class Debate:
         if not isinstance(critic, Critic):
             raise ValueError("Critic must be an instance of Critic class")
 
-    def execute_debate(self, task: str, ground_truth: str):
+    def execute_debate(self, tasks: List[str], ground_truths: List[str]):
         """
         Execute a debate between the experts and the critic.
         """
         metrics = Metrics()
-        self.first_answer = self.expert_team.get_expert_answers(task)
-        for round in range(self.debate_rounds):
-            logger.info(f"Debate round {round+1} started")
-            expert_answers = self.expert_team.get_expert_answers(task)
-            critic_answer = self.critic(task, expert_answers, ground_truth)
-            # logger.info(f"Critic answer: {critic_answer}")
+
+        for debate_round in range(self.debate_rounds):
+            logger.info(f"Debate round {debate_round+1} started")
+
+            expert_answers = self.expert_team.get_expert_answers(tasks[debate_round])
+            critic_answer = self.critic(tasks[debate_round], expert_answers, ground_truths[debate_round])
+            
+            for expert in self.expert_team.experts:
+                expert.update(critic_answer)
             
             for expert in self.expert_team.experts:
                 expert.update(critic_answer)
 
-            rouge_scores, bertscore_scores, novelty_scores, length_ratios = metrics(ground_truth, expert_answers)
-            self.metric_dict[f"round_{round+1}"] = {
+            rouge_scores, bertscore_scores, novelty_scores, length_ratios = metrics(ground_truths[debate_round], expert_answers)
+            self.metric_dict[f"{debate_round+1}"] = {
                 "rouge_scores": rouge_scores,
                 "bertscore_scores": bertscore_scores,
                 "novelty_scores": novelty_scores,
                 "length_ratios": length_ratios
             }
-            logger.info(f"Debate round {round+1} completed")
+            logger.info(f"Debate round {debate_round+1} completed")
+
         
         self._have_debated = True
+        logger.info(f"Debate completed")
+        logger.info(f"Metric dict: {self.metric_dict}")
     
     def get_final_answer(self, task: str):
         """

@@ -1,8 +1,8 @@
 mode: dev # Set to dev when testing, otherwise set to prod
 
 critic:
-  type: "causal"
-  name: "google/gemma-2-2b-it"
+  type: "seq2seq"
+  name: "google/flan-t5-base" # "google/gemma-2-2b-it"
   device: cpu
 
 experts:
@@ -10,7 +10,7 @@ experts:
   type: "seq2seq" # causal
   name: "google/flan-t5-small" # HuggingFaceTB/SmolLM2-135M
   device: cpu
-  debate_rounds: 1
+  debate_rounds: 5
   feedback_size: 2
 
 model_params:
