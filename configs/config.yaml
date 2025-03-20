@@ -1,9 +1,9 @@
-mode: dev # Set to dev when testing, otherwise set to prod
+mode: prod # Set to dev when testing, otherwise set to prod
 
 critic:
-  type: "seq2seq"
-  name: "google/flan-t5-base" # "google/gemma-2-2b-it"
-  device: cpu
+  type: "causal"
+  name:  "google/gemma-2-2b-it" # "google/flan-t5-base"
+  device: cuda
 
 experts:
   num_experts: 2
