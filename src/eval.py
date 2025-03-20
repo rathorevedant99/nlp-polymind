@@ -51,7 +51,7 @@ class Debate:
         
         self._have_debated = True
         logger.info(f"Debate completed")
-        logger.info(f"Metric dict: {self.metric_dict}")
+        logger.debug(f"Metric dict: {self.metric_dict}")
     
     def get_final_answer(self, task: str):
         """

@@ -1,30 +1,15 @@
 import matplotlib.pyplot as plt
 import os
+
 class Plotter:
-    def __init__(self, metrics: dict):
+    def __init__(self, config, metrics: dict = None):
         self.metrics = metrics
-        self.num_debate_rounds = len(metrics)
-        
-        self.rouge1_scores = [self.metrics[f"{i+1}"]["rouge_scores"]["rouge1"].fmeasure 
-                           for i in range(self.num_debate_rounds)]
-        self.rouge2_scores = [self.metrics[f"{i+1}"]["rouge_scores"]["rouge2"].fmeasure 
-                           for i in range(self.num_debate_rounds)]
-        self.rougeL_scores = [self.metrics[f"{i+1}"]["rouge_scores"]["rougeL"].fmeasure 
-                           for i in range(self.num_debate_rounds)]
-        
-        self.bertscore_scores = [float(self.metrics[f"{i+1}"]["bertscore_scores"][2]) 
-                                for i in range(self.num_debate_rounds)]
-        
-        self.novelty_scores = [sum(self.metrics[f"{i+1}"]["novelty_scores"].values()) / 2 
-                              for i in range(self.num_debate_rounds)]
-        
-        self.length_ratios = [sum(self.metrics[f"{i+1}"]["length_ratios"].values()) / 2 
-                             for i in range(self.num_debate_rounds)]
+        self.num_debate_rounds = config.experts.debate_rounds
 
     def __call__(self, save_path: str = None):
         self.plot_all_metrics(save_path)
     
-    def plot_all_metrics(self, save_path: str = None):
+    def plot_all_metrics(self, save_path: str = None, title: str = "metrics", show: bool = False):
         plt.figure(figsize=(15, 10))
         
         plt.subplot(2, 2, 1)
@@ -41,10 +26,19 @@ class Plotter:
         
         plt.tight_layout()
         if save_path:
-            plt.savefig(os.path.join(save_path, "metrics.png"))
-        plt.show()
+            plt.savefig(os.path.join(save_path, f"{title}.png"))
+        if show:
+            plt.show()
         
     def plot_rouge_scores(self):
+        self.rouge1_scores = [self.metrics[f"{i+1}"]["rouge_scores"]["rouge1"].fmeasure 
+                           for i in range(self.num_debate_rounds)]
+        self.rouge2_scores = [self.metrics[f"{i+1}"]["rouge_scores"]["rouge2"].fmeasure 
+                           for i in range(self.num_debate_rounds)]
+        self.rougeL_scores = [self.metrics[f"{i+1}"]["rouge_scores"]["rougeL"].fmeasure 
+                           for i in range(self.num_debate_rounds)]
+        
+
         rounds = list(range(1, self.num_debate_rounds + 1))
         plt.plot(rounds, self.rouge1_scores, marker='o', label='ROUGE-1 F1')
         plt.plot(rounds, self.rouge2_scores, marker='o', label='ROUGE-2 F1')
@@ -56,6 +50,9 @@ class Plotter:
         plt.grid(True)
 
     def plot_bertscore_scores(self):
+        self.bertscore_scores = [float(self.metrics[f"{i+1}"]["bertscore_scores"][2]) 
+                                for i in range(self.num_debate_rounds)]
+
         rounds = list(range(1, self.num_debate_rounds + 1))
         plt.plot(rounds, self.bertscore_scores, marker='o')
         plt.title('BERTScore F1')
@@ -64,6 +61,9 @@ class Plotter:
         plt.grid(True)
 
     def plot_novelty_scores(self):
+        self.novelty_scores = [sum(self.metrics[f"{i+1}"]["novelty_scores"].values()) / 2 
+                              for i in range(self.num_debate_rounds)]
+        
         rounds = list(range(1, self.num_debate_rounds + 1))
         plt.plot(rounds, self.novelty_scores, marker='o')
         plt.title('Average Novelty Scores')
@@ -72,12 +72,22 @@ class Plotter:
         plt.grid(True)
 
     def plot_length_ratios(self):
+        self.length_ratios = [sum(self.metrics[f"{i+1}"]["length_ratios"].values()) / 2 
+                             for i in range(self.num_debate_rounds)]
+        
         rounds = list(range(1, self.num_debate_rounds + 1))
         plt.plot(rounds, self.length_ratios, marker='o')
         plt.title('Average Length Ratios')
         plt.xlabel('Debate Round')
         plt.ylabel('Ratio')
         plt.grid(True)
+        
+    def multi_feedbacks_plot(self, feedback_dict: dict, save_path: str = None, title: str = "metrics"):
+        for feedback_size, metrics in feedback_dict.items():
+            self.metrics = metrics
+            self.plot_all_metrics(save_path, f"{title}_{feedback_size}")
+            plt.close()
+        
         
         
     
