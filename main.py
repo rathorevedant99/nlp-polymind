@@ -58,7 +58,7 @@ def main(config: DictConfig):
         
     debate.execute_debate(tasks, ground_truths)
 
-    plotter = Plotter(debate.metric_dict)
+    plotter = Plotter(config, debate.metric_dict)
     plotter(hydra_output_path)
 
     # logger.info("Evaluating first answers for unseen data")
