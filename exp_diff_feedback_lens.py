@@ -3,14 +3,16 @@ For different feedback sizes, check the performances.
 """
 import hydra
 from omegaconf import DictConfig
+
 from src.agent.expert import Expert
 from src.agent.team import ExpertTeam
 from src.agent.critic import Critic
 from src.utils.arranger import Arranger
 from src.utils.plotmetrics import Plotter
 from src.eval import Debate
-import random
+
 import logging
+from tqdm import tqdm
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -22,7 +24,7 @@ def main(config: DictConfig):
     """
     hydra_output_path = hydra.core.hydra_config.HydraConfig.get().runtime.output_dir
     arranger = Arranger(config)
-    feedback_sizes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    feedback_sizes = [1,2,3,4,5,6]
     expert_datasets, eval_data, _ = arranger.create_datasets()
 
     shuffled_eval_data = eval_data.shuffle()
@@ -36,6 +38,9 @@ def main(config: DictConfig):
         raise ValueError(f"Invalid dataset name: {config.dataset_name}")
 
     num_experts = config.experts.num_experts
+    critic = Critic(config)
+
+    feedback_metrics = {}
 
     for feedback_size in feedback_sizes:
         logger.info(f"Running with feedback size: {feedback_size}")
@@ -45,19 +50,19 @@ def main(config: DictConfig):
             expert.feedback_size = feedback_size
 
         team = ExpertTeam(experts)
-        critic = Critic(config)
         debate = Debate(config, team, critic)
 
         debate.execute_debate(tasks, ground_truths)
 
-        plotter = Plotter(debate.metric_dict)
-        plotter(hydra_output_path, f"feedback_size_{feedback_size}")
+        feedback_metrics[feedback_size] = debate.metric_dict
 
         del experts
         del team
-        del critic
         del debate
-        del plotter
+
+    logger.info(f"Feedback metrics: {feedback_metrics}")
+    plotter = Plotter(config)
+    plotter.multi_feedbacks_plot(feedback_metrics, hydra_output_path, "feedback_size")
 
 if __name__ == "__main__":
     main()

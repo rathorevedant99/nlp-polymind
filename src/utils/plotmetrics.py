@@ -83,10 +83,73 @@ class Plotter:
         plt.grid(True)
         
     def multi_feedbacks_plot(self, feedback_dict: dict, save_path: str = None, title: str = "metrics"):
+        plt.figure(figsize=(15, 10))
+        
+        # Create subplots
+        plt.subplot(2, 2, 1)
+        self._plot_multi_rouge_scores(feedback_dict)
+        
+        plt.subplot(2, 2, 2)
+        self._plot_multi_bertscore_scores(feedback_dict)
+        
+        plt.subplot(2, 2, 3)
+        self._plot_multi_novelty_scores(feedback_dict)
+        
+        plt.subplot(2, 2, 4)
+        self._plot_multi_length_ratios(feedback_dict)
+        
+        plt.tight_layout()
+        if save_path:
+            plt.savefig(os.path.join(save_path, f"{title}.png"))
+        plt.close()
+
+    def _plot_multi_rouge_scores(self, feedback_dict):
+        rounds = list(range(1, self.num_debate_rounds + 1))
         for feedback_size, metrics in feedback_dict.items():
-            self.metrics = metrics
-            self.plot_all_metrics(save_path, f"{title}_{feedback_size}")
-            plt.close()
+            rouge1_scores = [metrics[f"{i+1}"]["rouge_scores"]["rouge1"].fmeasure 
+                            for i in range(self.num_debate_rounds)]
+            plt.plot(rounds, rouge1_scores, marker='o', label=f'feedback size={feedback_size}')
+        plt.title('ROUGE-1 Scores by Feedback Size')
+        plt.xlabel('Debate Round')
+        plt.ylabel('Score')
+        plt.legend()
+        plt.grid(True)
+
+    def _plot_multi_bertscore_scores(self, feedback_dict):
+        rounds = list(range(1, self.num_debate_rounds + 1))
+        for feedback_size, metrics in feedback_dict.items():
+            bertscore_scores = [float(metrics[f"{i+1}"]["bertscore_scores"][2]) 
+                               for i in range(self.num_debate_rounds)]
+            plt.plot(rounds, bertscore_scores, marker='o', label=f'feedback size={feedback_size}')
+        plt.title('BERTScore F1 by Feedback Size')
+        plt.xlabel('Debate Round')
+        plt.ylabel('Score')
+        plt.legend()
+        plt.grid(True)
+
+    def _plot_multi_novelty_scores(self, feedback_dict):
+        rounds = list(range(1, self.num_debate_rounds + 1))
+        for feedback_size, metrics in feedback_dict.items():
+            novelty_scores = [sum(metrics[f"{i+1}"]["novelty_scores"].values()) / 2 
+                             for i in range(self.num_debate_rounds)]
+            plt.plot(rounds, novelty_scores, marker='o', label=f'feedback size={feedback_size}')
+        plt.title('Average Novelty Scores by Feedback Size')
+        plt.xlabel('Debate Round')
+        plt.ylabel('Score')
+        plt.legend()
+        plt.grid(True)
+
+    def _plot_multi_length_ratios(self, feedback_dict):
+        rounds = list(range(1, self.num_debate_rounds + 1))
+        for feedback_size, metrics in feedback_dict.items():
+            length_ratios = [sum(metrics[f"{i+1}"]["length_ratios"].values()) / 2 
+                             for i in range(self.num_debate_rounds)]
+            plt.plot(rounds, length_ratios, marker='o', label=f'feedback size={feedback_size}')
+        plt.title('Average Length Ratios by Feedback Size')
+        plt.xlabel('Debate Round')
+        plt.ylabel('Ratio')
+        plt.legend()
+        plt.grid(True)
         
         
         

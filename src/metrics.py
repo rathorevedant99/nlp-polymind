@@ -36,7 +36,6 @@ class Metrics:
         scorer = rouge_scorer.RougeScorer(['rouge1', 'rouge2', 'rougeL'], use_stemmer=True)
         for expert_id, answer in expert_answers.items():
             scores = scorer.score(ground_truth, answer)
-            print(f"Expert {expert_id} rouge scores: {scores}")
         return scores
     
     def eval_bertscore(self, ground_truth: str, expert_answers: dict):
@@ -44,7 +43,6 @@ class Metrics:
         scorer = BERTScorer(lang="en", rescale_with_baseline=True)
         for expert_id, answer in expert_answers.items():
             scores = scorer.score([ground_truth], [answer])
-            print(f"Expert {expert_id} bertscore scores: {scores}")
         return scores
     
     def eval_novelty(self, ground_truth: str, expert_answers: dict):
