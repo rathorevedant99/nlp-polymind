@@ -5,7 +5,6 @@ Critic Class
 
 from src.agent.base import BaseAgent
 import logging
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 import re
 
 logger = logging.getLogger(__name__)
@@ -60,12 +59,9 @@ class Critic(BaseAgent):
         prompt += f"Provide a maximum of one line feedback for the experts here. \n"
         # for i in range(len(expert_answers)):
         #     prompt += f"Feedback for Expert {i}:  <YOUR FEEdBACK>\n\n"
-        # logger.info(f"Prompt to Critic: {prompt}")
+        logger.info(f"Prompt to Critic: {prompt}")
         tokenized_prompt = self.tokenizer(prompt, return_tensors="pt", padding=True)
-        
-
-        # model = AutoModelForSeq2SeqLM.from_pretrained("google/flan-t5-xl")
-        # tokenizer = AutoTokenizer.from_pretrained("google/flan-t5-xl")
+    
 
         output = self.model.generate(
             input_ids=tokenized_prompt["input_ids"].to(self.model.device),
@@ -73,15 +69,23 @@ class Critic(BaseAgent):
             pad_token_id=self.tokenizer.eos_token_id, max_length=1024
         )
         critic_output = self.tokenizer.decode(output[0], skip_special_tokens=True)
+        logger.info(f"Entire Critic output: {critic_output}")
         
 
         try:
             critic_output = critic_output.split("=== Provide Feedback ===")[-1].strip()
             matches = re.findall(r"Expert (\d+): (.+)", critic_output)
             output_dict = {int(num): statement for num, statement in matches}
-        except:
-            output_dict = {int(i): "" for i in range(len(expert_answers))}
-        # logger.info(f"Critic output: {output_dict}")
+            
+            # Ensure all expert indices are present in the dictionary
+            for i in range(len(expert_answers)):
+                if i not in output_dict:
+                    output_dict[i] = ""
+                    logger.warning(f"No feedback found for Expert {i}, adding default feedback")
+        except Exception as e:
+            output_dict = dict((i, "") for i in range(len(expert_answers)))
+            
+        logger.info(f"Final critic output dictionary: {output_dict}")
         # logger.info(f"Critic output completed: ")
 
 
