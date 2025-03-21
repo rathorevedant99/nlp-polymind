@@ -135,7 +135,7 @@ class Expert(BaseAgent):
             )
 
         decoded_output = self.tokenizer.decode(output[0], skip_special_tokens=True)
-        logger.debug(f"Expert {self.expert_id} answer: {decoded_output}")
+        logger.info(f"Expert {self.expert_id} answer: {decoded_output}")
         
         return decoded_output
     

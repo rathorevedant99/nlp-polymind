@@ -44,8 +44,8 @@ training:
 
 data:
   data_cache_dir: "./data/cache"
-  # category: "math"
-  # name: "gsm8k"
-  category: "summarization" # "summarization" or "math"
-  name: "samsum"
+  category: "math"
+  name: "gsm8k"
+  # category: "summarization" # "summarization" or "math"
+  # name: "samsum"
   split: ["train[:10%]+validation[:5%]+test[:5%]"]

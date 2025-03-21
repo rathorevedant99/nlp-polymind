@@ -62,7 +62,7 @@ class Critic(BaseAgent):
         prompt += f"=== Ground Truth === \n {ground_truth}\n\n === Provide Feedback ===\n"
         # prompt += f"Provide a maximum of one line feedback for the experts here. \n"
 
-        logger.debug(f"Prompt to Critic: {prompt}")
+        logger.info(f"Prompt to Critic: {prompt}")
         tokenized_prompt = self.tokenizer(prompt, return_tensors="pt", padding=True)
         tokenized_prompt = tokenized_prompt.to(self.device_available)
 
@@ -74,7 +74,7 @@ class Critic(BaseAgent):
         critic_output = self.tokenizer.decode(output[0], skip_special_tokens=True)
         
         critic_output = critic_output.split("=== Provide Feedback ===")[-1].strip()
-        logger.debug(f"critic output whole: {critic_output}")
+        logger.info(f"critic output whole: {critic_output}")
         
         expert_segments = critic_output.split("Expert")[1:]
         matches = []
@@ -97,7 +97,7 @@ class Critic(BaseAgent):
                 if i not in output_dict:
                     output_dict[i] = "No feedback provided"
 
-        logger.debug(f"Critic output: {output_dict}")
+        logger.info(f"Critic output: {output_dict}")
         logger.debug(f"Critic output completed")
         return output_dict
 
