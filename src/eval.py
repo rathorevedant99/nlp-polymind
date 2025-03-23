@@ -35,9 +35,6 @@ class Debate:
             
             for expert in self.expert_team.experts:
                 expert.update(critic_answer)
-            
-            for expert in self.expert_team.experts:
-                expert.update(critic_answer)
 
             rouge_scores, bertscore_scores, novelty_scores, length_ratios = metrics(ground_truths[debate_round], expert_answers)
             self.metric_dict[f"{debate_round+1}"] = {
