@@ -52,8 +52,7 @@ class Critic(BaseAgent):
         # logger.info(f"Model:{self.model}")
 
         instruction = f"""As a feedback provider, Compare the expert answers with the ground truth and provide a one-line, 
-        general feedback for each expert answer on how it can be improved to better match the ground truth. Do not include any explanation or context-specific details in the feedback.
-        If an expert answer is close to the ground truth, you may also provide brief positive feedback."""
+        general feedback for each expert answer on how it can be improved to better match the ground truth. Do not include any explanation or context-specific details in the feedback."""
 
         prompt = f"{instruction}\n\n=== Expert Answers ===\n\n"
         for i, answer in enumerate(expert_answers):

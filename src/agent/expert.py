@@ -17,7 +17,7 @@ class Expert(BaseAgent):
         super().__init__(config, "expert")
         self.expert_id = expert_id
         if self.config.data.category == "summarization":
-            self.default_prompt = "Summarize this conversation:\n\n{}\n\n"
+            self.default_prompt = "Task: Summarize the following conversation:\n\n{}\n\n"
         elif self.config.data.category == "math":
             self.default_prompt = "Solve this math problem:\n\n{}\n\n"
         else:
@@ -114,7 +114,7 @@ class Expert(BaseAgent):
         """
         feedback_context = ""
         if len(self.feedback) > 0:
-            feedback_context += "\n\n Consider the below feedback while generating the response.\n\n"
+            feedback_context += "\n\n Consider the below instruction while generating the response.\n\n"
             if len(self.feedback) > self.feedback_size:
                 feedback_context += "\n".join([f"- {feedback}" for feedback in self.feedback[-self.feedback_size:]])
             else:
