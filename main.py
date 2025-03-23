@@ -15,6 +15,11 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+from huggingface_hub import login
+
+login(token="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")
+
+
 @hydra.main(version_base=None, config_path="configs", config_name="config.yaml")
 def main(config: DictConfig):
     """

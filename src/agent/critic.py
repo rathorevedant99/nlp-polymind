@@ -51,8 +51,8 @@ class Critic(BaseAgent):
 
         # logger.info(f"Model:{self.model}")
 
-        instruction = f"""As a feedback provider, compare the provided expert answers with the provided ground truth.
-            Give a one lined feedback on what could be improved in each expert answer to make it closer to the ground truth.
+        instruction = f"""As a teacher, guide the experts so that their answers get closer to the provided ground truth.
+            Give a one lined instruction on what could be improved in each expert answer. The instructions should be very generic, do not include specific details from the ground truth.
         """
 
         prompt = f"{instruction}\n\n=== Expert Answers ===\n\n"
@@ -69,12 +69,18 @@ class Critic(BaseAgent):
         output = self.model.generate(
             input_ids=tokenized_prompt["input_ids"],
             attention_mask=tokenized_prompt["attention_mask"],  
-            pad_token_id=self.tokenizer.eos_token_id, max_length=512
+            pad_token_id=self.tokenizer.eos_token_id,
+            max_new_tokens=self.config.model_params.max_new_tokens,
+            temperature=self.config.model_params.temperature,
+            do_sample=self.config.model_params.do_sample,
+            top_p=self.config.model_params.top_p,
+            num_return_sequences=self.config.model_params.num_return_sequences,
+            min_new_tokens=self.config.model_params.min_new_tokens
         )
         critic_output = self.tokenizer.decode(output[0], skip_special_tokens=True)
         
         critic_output = critic_output.split("=== Provide Feedback ===")[-1].strip()
-        logger.info(f"critic output whole: {critic_output}")
+        logger.debug(f"critic output whole: {critic_output}")
         
         expert_segments = critic_output.split("Expert")[1:]
         matches = []
@@ -87,7 +93,7 @@ class Critic(BaseAgent):
         logger.debug(f"Matches: {matches}")
         
         if len(matches) == 0:
-            return {num: "No matches found in critic output" for num in range(len(expert_answers))}
+            return {num: "" for num in range(len(expert_answers))}
 
         output_dict = {int(num): statement.strip() for num, statement in matches}
         
@@ -95,9 +101,9 @@ class Critic(BaseAgent):
             logger.warning(f"Missing feedback for some experts. Expected {len(expert_answers)}, got {len(output_dict)}")
             for i in range(len(expert_answers)):
                 if i not in output_dict:
-                    output_dict[i] = "No feedback provided"
+                    output_dict[i] = ""
 
-        logger.info(f"Critic output: {output_dict}")
+        logger.debug(f"Critic output: {output_dict}")
         logger.debug(f"Critic output completed")
         return output_dict
 
