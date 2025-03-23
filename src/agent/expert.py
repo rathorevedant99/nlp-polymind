@@ -114,11 +114,11 @@ class Expert(BaseAgent):
         """
         feedback_context = ""
         if len(self.feedback) > 0:
+            feedback_context += "\n\n Consider the below feedback while generating the response.\n\n"
             if len(self.feedback) > self.feedback_size:
                 feedback_context += "\n".join([f"- {feedback}" for feedback in self.feedback[-self.feedback_size:]])
             else:
                 feedback_context += "\n".join([f"- {feedback}" for feedback in self.feedback])
-            feedback_context += "\n\n Consider the above information while generating the response.\n\n"
     
         expert_prompt = self.default_prompt.format(task) + feedback_context
         logger.info(f"Expert {self.expert_id} prompt: {expert_prompt}")
