@@ -52,7 +52,8 @@ class Critic(BaseAgent):
         # logger.info(f"Model:{self.model}")
 
         instruction = f"""As a teacher, guide the experts so that their answers get closer to the provided ground truth.
-            Give a one lined instruction on what could be improved in each expert answer. The instructions should be very generic, do not include specific details from the ground truth.
+            Give a one lined instruction to each expert to improve their answers. The instructions should be very generic, do not include specific details from the ground truth.
+    
         """
 
         prompt = f"{instruction}\n\n=== Expert Answers ===\n\n"
@@ -62,7 +63,7 @@ class Critic(BaseAgent):
         prompt += f"=== Ground Truth === \n {ground_truth}\n\n === Provide Feedback ===\n"
         # prompt += f"Provide a maximum of one line feedback for the experts here. \n"
 
-        logger.info(f"Prompt to Critic: {prompt}")
+        # logger.info(f"Prompt to Critic: {prompt}")
         tokenized_prompt = self.tokenizer(prompt, return_tensors="pt", padding=True)
         tokenized_prompt = tokenized_prompt.to(self.device_available)
 
