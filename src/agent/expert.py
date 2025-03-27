@@ -113,15 +113,15 @@ class Expert(BaseAgent):
         """
         feedback_context = ""
         if len(self.feedback) > 0:
-            logger.debug(f"Feedback: {self.feedback}")
+            # logger.info(f"Feedback: {self.feedback}")
             if len(self.feedback) > self.feedback_size:
                 feedback_context += "\n".join([f"- {feedback}" for feedback in self.feedback[-self.feedback_size:]])
             else:
                 feedback_context += "\n".join([f"- {feedback}" for feedback in self.feedback])
-            feedback_context += "\n\n Consider the above feedback while generating the response.\n\n"
+            feedback_context += "\n\n Consider the above instructions while generating the response.\n\n"
     
         expert_prompt = self.default_prompt.format(task) + feedback_context
-        logger.info(f"Expert {self.expert_id} prompt: {expert_prompt}")
+        # logger.info(f"Expert {self.expert_id} prompt: {expert_prompt}")
         
         tokenized_prompt = self.tokenizer(expert_prompt, return_tensors="pt", truncation=True, padding=True, max_length=512)
         
@@ -151,5 +151,5 @@ class Expert(BaseAgent):
         """
         relevant_feedback = {k: v for k, v in feedback.items() if k == self.expert_id}
         relevant_feedback = relevant_feedback[self.expert_id]
-        logger.info(f"Expert {self.expert_id} feedback: {relevant_feedback}")
+        # logger.info(f"Expert {self.expert_id} feedback: {relevant_feedback}")
         self.feedback.append(relevant_feedback)

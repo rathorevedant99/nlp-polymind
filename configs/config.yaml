@@ -6,12 +6,13 @@ critic:
   device: cuda
 
 experts:
-  num_experts: 2
+  num_experts: 1
   type: "seq2seq" # causal
-  name: "google/flan-t5-small" # HuggingFaceTB/SmolLM2-135M
+  name: "google/flan-t5-large" # HuggingFaceTB/SmolLM2-135M
   device: cpu
-  debate_rounds: 15
-  feedback_size: 2
+  debate_rounds: 10
+  feedback_size: 1
+  
 
 model_params:
   max_new_tokens: 256

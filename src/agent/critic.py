@@ -53,7 +53,8 @@ class Critic(BaseAgent):
 
         instruction = f"""As a teacher, guide the experts so that their answers get closer to the provided ground truth.
             Give a one lined instruction to each expert to improve their answers. The instructions should be very generic, do not include specific details from the ground truth.
-    
+            The instructions should be in the following format:
+            Expert : <instruction>
         """
 
         prompt = f"{instruction}\n\n=== Expert Answers ===\n\n"
@@ -104,7 +105,7 @@ class Critic(BaseAgent):
                 if i not in output_dict:
                     output_dict[i] = ""
 
-        logger.debug(f"Critic output: {output_dict}")
+        logger.info(f"Critic output: {output_dict}")
         logger.debug(f"Critic output completed")
         return output_dict
 

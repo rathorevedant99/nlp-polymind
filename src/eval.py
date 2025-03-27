@@ -26,12 +26,14 @@ class Debate:
         Execute a debate between the experts and the critic.
         """
         metrics = Metrics()
+        logger.info(f"Tasks: {tasks[0]}")
+        logger.info(f"Ground truth: {ground_truths[0]}")
 
         for debate_round in range(self.debate_rounds):
             logger.info(f"Debate round {debate_round+1} started")
 
-            expert_answers = self.expert_team.get_expert_answers(tasks[debate_round])
-            critic_answer = self.critic(tasks[debate_round], expert_answers, ground_truths[debate_round])
+            expert_answers = self.expert_team.get_expert_answers(tasks[0])
+            critic_answer = self.critic(tasks[0], expert_answers, ground_truths[0])
             
             for expert in self.expert_team.experts:
                 expert.update(critic_answer)

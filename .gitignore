@@ -187,3 +187,6 @@ outputs/*
 
 # Data cache
 *cache*
+
+# Wandb
+wandb/*
