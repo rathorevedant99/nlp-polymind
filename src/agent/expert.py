@@ -154,5 +154,5 @@ class Expert(BaseAgent):
         """
         # relevant_feedback = {k: v for k, v in feedback.items() if k == self.expert_id}
         # relevant_feedback = relevant_feedback[self.expert_id]
-        logger.info(f"Feedback: {feedback}")
+        # logger.info(f"Feedback: {feedback}")
         self.feedback.append(feedback)

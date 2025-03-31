@@ -35,7 +35,6 @@ class Debate:
             expert_answers = self.expert_team.get_expert_answers(tasks[debate_round], feedback)
             critic_answer = self.critic(tasks[debate_round], expert_answers, ground_truths[debate_round])
 
-
             for expert in self.expert_team.experts:
                 expert.update(critic_answer)
 

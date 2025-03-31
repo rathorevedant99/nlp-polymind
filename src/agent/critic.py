@@ -53,18 +53,20 @@ class Critic(BaseAgent):
         logger.info(f"Ground Truth: {ground_truth}")
 
         
-        if config.data.category == "math":
+        if self.config.data.category == "math":
             instruction = f"""As a teacher, guide the experts so that their answers get closer to the provided ground truth.
                 The experts are given a math problem and their job is to solve it. Give a one lined instruction to each expert to improve their answers.
                 The instructions should be in the following format:
                 Expert : <instruction>
             """
-        elif config.data.category == "translation":
+        elif self.config.data.category == "translation":
             instruction = f"""List down the words in the expert answer that the expert was not able to translate correctly. The expert was given a task to translate a german sentence to english.
                 Only list the words that expert could not translate correctly. The answer should be in the following format:
                 <german word> : <english word>
+                <german word> : <english word>
+                ...
             """
-        elif config.data.category == "summarization":
+        elif self.config.data.category == "summarization":
             instruction = f"""As a teacher, guide the experts so that their answers get closer to the provided ground truth.
                 Give a one lined instruction to each expert to improve their answers. The instructions should be very generic, do not include specific details from the ground truth.
                 The instructions should be in the following format:
