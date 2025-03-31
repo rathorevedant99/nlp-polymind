@@ -50,24 +50,55 @@ class Critic(BaseAgent):
         # )
 
         # logger.info(f"Model:{self.model}")
+        logger.info(f"Ground Truth: {ground_truth}")
 
-        instruction = f"""As a teacher, guide the experts so that their answers get closer to the provided ground truth.
-            Give a one lined instruction to each expert to improve their answers. The instructions should be very generic, do not include specific details from the ground truth.
-            The instructions should be in the following format:
-            Expert : <instruction>
-        """
+        
+        if config.data.category == "math":
+            instruction = f"""As a teacher, guide the experts so that their answers get closer to the provided ground truth.
+                The experts are given a math problem and their job is to solve it. Give a one lined instruction to each expert to improve their answers.
+                The instructions should be in the following format:
+                Expert : <instruction>
+            """
+        elif config.data.category == "translation":
+            instruction = f"""List down the words in the expert answer that the expert was not able to translate correctly. The expert was given a task to translate a german sentence to english.
+                Only list the words that expert could not translate correctly. The answer should be in the following format:
+                <german word> : <english word>
+            """
+        elif config.data.category == "summarization":
+            instruction = f"""As a teacher, guide the experts so that their answers get closer to the provided ground truth.
+                Give a one lined instruction to each expert to improve their answers. The instructions should be very generic, do not include specific details from the ground truth.
+                The instructions should be in the following format:
+                Expert : <instruction>
+            """
+        else:
+            raise ValueError(f"Invalid category: {config.data.category}")
 
+
+
+
+        # instruction = f"""The expert has been given a task to translate a german sentence to english. Provide a list of only those words that the expert was not able to translate correctly.
+        #     The answer should be in the following format:
+        #     <german word> : <english word>
+        #     <german word> : <english word>
+        #     ...
+        #     Your answer should not contain any other text.
+        # """
+
+        
         prompt = f"{instruction}\n\n=== Expert Answers ===\n\n"
         for i, answer in enumerate(expert_answers):
             prompt += f"Expert {i}: {expert_answers[i]}\n\n"
 
-        prompt += f"=== Ground Truth === \n {ground_truth}\n\n === Provide Feedback ===\n"
+        prompt += f"=== Task ===\n{task}\n\n"
+
+        prompt += f"=== Ground Truth === \n {ground_truth}\n\n === List of words ===\n"
         # prompt += f"Provide a maximum of one line feedback for the experts here. \n"
 
         # logger.info(f"Prompt to Critic: {prompt}")
         tokenized_prompt = self.tokenizer(prompt, return_tensors="pt", padding=True)
         tokenized_prompt = tokenized_prompt.to(self.device_available)
 
+        torch.cuda.empty_cache()
         output = self.model.generate(
             input_ids=tokenized_prompt["input_ids"],
             attention_mask=tokenized_prompt["attention_mask"],  
@@ -80,34 +111,34 @@ class Critic(BaseAgent):
             min_new_tokens=self.config.model_params.min_new_tokens
         )
         critic_output = self.tokenizer.decode(output[0], skip_special_tokens=True)
+        # logger.info(f"critic output whole: {critic_output}")
+        critic_output = critic_output.split("=== List of words ===")[-1].strip()
+        logger.info(f"critic output whole: {critic_output}")
         
-        critic_output = critic_output.split("=== Provide Feedback ===")[-1].strip()
-        logger.debug(f"critic output whole: {critic_output}")
+        # expert_segments = critic_output.split("Expert")[1:]
+        # matches = []
         
-        expert_segments = critic_output.split("Expert")[1:]
-        matches = []
+        # for segment in expert_segments:
+        #     if match := re.match(r'\s*(\d+)\s*:\s*([^E]+)', segment):
+        #         expert_num, feedback = match.groups()
+        #         matches.append((expert_num, feedback.strip()))
         
-        for segment in expert_segments:
-            if match := re.match(r'\s*(\d+)\s*:\s*([^E]+)', segment):
-                expert_num, feedback = match.groups()
-                matches.append((expert_num, feedback.strip()))
+        # logger.debug(f"Matches: {matches}")
         
-        logger.debug(f"Matches: {matches}")
-        
-        if len(matches) == 0:
-            return {num: "" for num in range(len(expert_answers))}
+        # if len(matches) == 0:
+        #     return {num: "" for num in range(len(expert_answers))}
 
-        output_dict = {int(num): statement.strip() for num, statement in matches}
+        # output_dict = {int(num): statement.strip() for num, statement in matches}
         
-        if len(output_dict) != len(expert_answers):
-            logger.warning(f"Missing feedback for some experts. Expected {len(expert_answers)}, got {len(output_dict)}")
-            for i in range(len(expert_answers)):
-                if i not in output_dict:
-                    output_dict[i] = ""
+        # if len(output_dict) != len(expert_answers):
+        #     logger.warning(f"Missing feedback for some experts. Expected {len(expert_answers)}, got {len(output_dict)}")
+        #     for i in range(len(expert_answers)):
+        #         if i not in output_dict:
+        #             output_dict[i] = ""
 
-        logger.info(f"Critic output: {output_dict}")
-        logger.debug(f"Critic output completed")
-        return output_dict
+        # logger.info(f"Critic output: {output_dict}")
+        # logger.debug(f"Critic output completed")
+        return critic_output
 
 
 

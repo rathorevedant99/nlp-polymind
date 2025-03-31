@@ -19,6 +19,8 @@ class Expert(BaseAgent):
             self.default_prompt = "Summarize this conversation:\n\n{}\n\n"
         elif self.config.data.category == "math":
             self.default_prompt = "Solve this math problem:\n\n{}\n\n"
+        elif self.config.data.category == "translation":
+            self.default_prompt = "Translate this conversation from German to English:\n\n{}\n\n"
         else:
             raise ValueError(f"Unsupported data category: {self.config.data.category}")
 
@@ -103,7 +105,7 @@ class Expert(BaseAgent):
             logger.error(f"Error loading LORA weights for expert {self.expert_id}: {e}", exc_info=True)
             raise e
 
-    def generate(self, task):
+    def generate(self, task, feedback=False):
         """
         Generate an expert answer for the given task.
         Args:
@@ -112,16 +114,17 @@ class Expert(BaseAgent):
             str: Generated expert answer
         """
         feedback_context = ""
-        if len(self.feedback) > 0:
-            # logger.info(f"Feedback: {self.feedback}")
-            if len(self.feedback) > self.feedback_size:
-                feedback_context += "\n".join([f"- {feedback}" for feedback in self.feedback[-self.feedback_size:]])
-            else:
-                feedback_context += "\n".join([f"- {feedback}" for feedback in self.feedback])
-            feedback_context += "\n\n Consider the above instructions while generating the response.\n\n"
-    
+        if feedback:
+            # if len(self.feedback) > 0:
+            #     logger.info(f"Feedback is available")
+            #     if len(self.feedback) > self.feedback_size:
+            #         feedback_context += "\n".join([f"- {feedback}" for feedback in self.feedback[-self.feedback_size:]])
+            #     else:
+            feedback_context += "\n".join([f"- {feedback}" for feedback in self.feedback])
+            feedback_context += "\n\n Here are a few german to english translations for reference.\n\n"
+
         expert_prompt = self.default_prompt.format(task) + feedback_context
-        # logger.info(f"Expert {self.expert_id} prompt: {expert_prompt}")
+        logger.info(f"Expert {self.expert_id} prompt: {expert_prompt}")
         
         tokenized_prompt = self.tokenizer(expert_prompt, return_tensors="pt", truncation=True, padding=True, max_length=512)
         
@@ -149,7 +152,7 @@ class Expert(BaseAgent):
         """
         Update the expert's feedback.
         """
-        relevant_feedback = {k: v for k, v in feedback.items() if k == self.expert_id}
-        relevant_feedback = relevant_feedback[self.expert_id]
-        # logger.info(f"Expert {self.expert_id} feedback: {relevant_feedback}")
-        self.feedback.append(relevant_feedback)
+        # relevant_feedback = {k: v for k, v in feedback.items() if k == self.expert_id}
+        # relevant_feedback = relevant_feedback[self.expert_id]
+        logger.info(f"Feedback: {feedback}")
+        self.feedback.append(feedback)

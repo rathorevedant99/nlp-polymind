@@ -32,6 +32,9 @@ def main(config: DictConfig):
     elif config.data.name == "gsm8k":
         tasks = [task_set["question"] for task_set in shuffled_eval_data]
         ground_truths = [task_set["answer"] for task_set in shuffled_eval_data]
+    elif config.data.name == "opus":
+        tasks = [task_set["de"] for task_set in shuffled_eval_data]
+        ground_truths = [task_set["en"] for task_set in shuffled_eval_data]
     else:
         raise ValueError(f"Invalid dataset name: {config.dataset_name}")
 

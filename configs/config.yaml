@@ -8,10 +8,11 @@ critic:
 experts:
   num_experts: 1
   type: "seq2seq" # causal
-  name: "google/flan-t5-large" # HuggingFaceTB/SmolLM2-135M
+  name: "google/flan-t5-base" # HuggingFaceTB/SmolLM2-135M
   device: cpu
-  debate_rounds: 10
-  feedback_size: 1
+  debate_rounds: 15
+  feedback_size: 100
+  batch_size: 30
   
 
 model_params:
@@ -45,8 +46,10 @@ training:
 
 data:
   data_cache_dir: "./data/cache"
-  # category: "math"
-  # name: "gsm8k"
-  category: "summarization" # "summarization" or "math"
-  name: "samsum"
+  category: "math"
+  name: "gsm8k"
+  # category: "summarization" # "summarization" or "math"
+  # name: "samsum"
+  # category: "translation"
+  # name: "opus"
   split: ["train[:10%]+validation[:5%]+test[:5%]"]

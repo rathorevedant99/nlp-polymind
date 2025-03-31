@@ -57,6 +57,10 @@ class Data:
 
             model_inputs["labels"] = labels
             return model_inputs
+
+        elif self.dataset_name == "opus":
+            inputs = [f"Translate from German to English:\n\n{ex}\n\n" for ex in examples['de']]
+            targets = [ex + self.tokenizer.eos_token for ex in examples['en']]
         else:
             raise ValueError(f"Invalid dataset name: {self.dataset_name}")
         
@@ -91,6 +95,16 @@ class Data:
             self.data = load_dataset(self.dataset_name)
         elif self.dataset_name == "gsm8k":
             self.data = load_dataset(self.dataset_name, 'main')
+        elif self.dataset_name == "opus":
+            ds = load_dataset("kaitchup/opus-German-to-English")
+            ds["train"] = ds["train"].select(range(15000))
+            def split_text(example):
+                parts = example["text"].split("###>")
+                return {"de": parts[0].strip(), "en": parts[1].strip() if len(parts) > 1 else ""}
+
+            ds['train'] = ds['train'].map(split_text)
+            ds['validation'] = ds['validation'].map(split_text)
+            self.data = ds
         else:
             raise ValueError(f"Invalid dataset name: {self.dataset_name}")
 

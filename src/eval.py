@@ -14,6 +14,7 @@ class Debate:
         self.critic = critic
         self.metric_dict = {}
         self._have_debated = False
+        self.batch_size = config.experts.batch_size
         
         if not isinstance(expert_team, ExpertTeam):
             raise ValueError("Expert team must be an instance of ExpertTeam class")
@@ -26,15 +27,15 @@ class Debate:
         Execute a debate between the experts and the critic.
         """
         metrics = Metrics()
-        logger.info(f"Tasks: {tasks[0]}")
-        logger.info(f"Ground truth: {ground_truths[0]}")
 
         for debate_round in range(self.debate_rounds):
             logger.info(f"Debate round {debate_round+1} started")
+            feedback = True if debate_round % self.batch_size == 0 else False
 
-            expert_answers = self.expert_team.get_expert_answers(tasks[0])
-            critic_answer = self.critic(tasks[0], expert_answers, ground_truths[0])
-            
+            expert_answers = self.expert_team.get_expert_answers(tasks[debate_round], feedback)
+            critic_answer = self.critic(tasks[debate_round], expert_answers, ground_truths[debate_round])
+
+
             for expert in self.expert_team.experts:
                 expert.update(critic_answer)
 
