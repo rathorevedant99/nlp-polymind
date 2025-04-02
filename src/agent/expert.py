@@ -20,7 +20,7 @@ class Expert(BaseAgent):
         elif self.config.data.category == "math":
             self.default_prompt = "Solve this math problem:\n\n{}\n\n"
         elif self.config.data.category == "translation":
-            self.default_prompt = "Translate this conversation from German to English:\n\n{}\n\n"
+            self.default_prompt = "Translate the given German sentence to English:\n\n{}\n\n"
         else:
             raise ValueError(f"Unsupported data category: {self.config.data.category}")
 
@@ -114,14 +114,15 @@ class Expert(BaseAgent):
             str: Generated expert answer
         """
         feedback_context = ""
-        if feedback:
+        # if feedback:
             # if len(self.feedback) > 0:
             #     logger.info(f"Feedback is available")
             #     if len(self.feedback) > self.feedback_size:
             #         feedback_context += "\n".join([f"- {feedback}" for feedback in self.feedback[-self.feedback_size:]])
             #     else:
-            feedback_context += "\n".join([f"- {feedback}" for feedback in self.feedback])
-            feedback_context += "\n\n Here are a few german to english translations for reference.\n\n"
+            # feedback_context += "\n".join([f"- {feedback}" for feedback in self.feedback])
+            # feedback_context += "\n\n Consider the above feedback while generating the answer."
+            # feedback_context += "\n\n Here are a few german to english translations for reference.\n\n"
 
         expert_prompt = self.default_prompt.format(task) + feedback_context
         logger.info(f"Expert {self.expert_id} prompt: {expert_prompt}")
@@ -154,5 +155,5 @@ class Expert(BaseAgent):
         """
         # relevant_feedback = {k: v for k, v in feedback.items() if k == self.expert_id}
         # relevant_feedback = relevant_feedback[self.expert_id]
-        # logger.info(f"Feedback: {feedback}")
+        logger.info(f"Feedback: {self.feedback}")
         self.feedback.append(feedback)

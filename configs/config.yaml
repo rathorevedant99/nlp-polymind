@@ -6,7 +6,7 @@ critic:
   device: cuda
 
 experts:
-  num_experts: 1
+  num_experts: 2
   type: "seq2seq" # causal
   name: "google/flan-t5-base" # HuggingFaceTB/SmolLM2-135M
   device: cpu

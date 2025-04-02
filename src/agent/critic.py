@@ -41,15 +41,6 @@ class Critic(BaseAgent):
             str: Best answer along with reasoning
         """
         
-        # instruction = (
-        #     "You are a critic. You have been given a list of answers by various experts, "
-        #     "along with the ground truth for the given task. You have to evaluate them and "
-        #     "return the one that is closest to the ground truth. Provide a reasoning for your choice, "
-        #     "and also provide insights on the other answers. Keep in mind that the goal is to provide "
-        #     "constructive feedback to the experts. Keep it short and concise."
-        # )
-
-        # logger.info(f"Model:{self.model}")
         logger.info(f"Ground Truth: {ground_truth}")
 
         
@@ -60,15 +51,15 @@ class Critic(BaseAgent):
                 Expert : <instruction>
             """
         elif self.config.data.category == "translation":
-            instruction = f"""List down the words in the expert answer that the expert was not able to translate correctly. The expert was given a task to translate a german sentence to english.
-                Only list the words that expert could not translate correctly. The answer should be in the following format:
+           instruction = f""" Identify and list only the German words from the original sentence that the expert failed to translate correctly in their answer. Get the correct english translation from the provided Ground Truth.
+                The answer should be in the following format: 
                 <german word> : <english word>
                 <german word> : <english word>
-                ...
-            """
+                ....
+                Do not include the words that were translated correctly."""
         elif self.config.data.category == "summarization":
-            instruction = f"""As a teacher, guide the experts so that their answers get closer to the provided ground truth.
-                Give a one lined instruction to each expert to improve their answers. The instructions should be very generic, do not include specific details from the ground truth.
+            instruction = f"""As a teacher, guide the expert so that its answer gets closer to the provided ground truth.
+                Give a one lined instruction to the expert to improve its answer. The instructions should be very generic, do not include specific details from the ground truth.
                 The instructions should be in the following format:
                 Expert : <instruction>
             """
@@ -76,24 +67,23 @@ class Critic(BaseAgent):
             raise ValueError(f"Invalid category: {config.data.category}")
 
 
-
-
-        # instruction = f"""The expert has been given a task to translate a german sentence to english. Provide a list of only those words that the expert was not able to translate correctly.
-        #     The answer should be in the following format:
-        #     <german word> : <english word>
-        #     <german word> : <english word>
-        #     ...
-        #     Your answer should not contain any other text.
-        # """
-
         
-        prompt = f"{instruction}\n\n=== Expert Answers ===\n\n"
+        prompt = f"{instruction}\n\n"
+        prompt += f"=== German Sentence ===\n{task}\n\n"
+
+        prompt += f"=== Expert Answers ===\n\n"
         for i, answer in enumerate(expert_answers):
             prompt += f"Expert {i}: {expert_answers[i]}\n\n"
 
-        prompt += f"=== Task ===\n{task}\n\n"
-
-        prompt += f"=== Ground Truth === \n {ground_truth}\n\n === List of words ===\n"
+        prompt += f"=== Ground Truth === \n {ground_truth}\n\n"
+        if self.config.data.category == "translation":
+            prompt += f"=== Incorrect German words ===\n"
+        elif self.config.data.category == "summarization":
+            prompt += f"=== Feedback ===\n"
+        elif self.config.data.category == "math":
+            prompt += f"=== Feedback ===\n"
+        else:
+            raise ValueError(f"Invalid category: {self.config.data.category}")  
         # prompt += f"Provide a maximum of one line feedback for the experts here. \n"
 
         # logger.info(f"Prompt to Critic: {prompt}")
@@ -113,9 +103,33 @@ class Critic(BaseAgent):
             min_new_tokens=self.config.model_params.min_new_tokens
         )
         critic_output = self.tokenizer.decode(output[0], skip_special_tokens=True)
-        # logger.info(f"critic output whole: {critic_output}")
-        critic_output = critic_output.split("=== List of words ===")[-1].strip()
-        logger.info(f"critic output whole: {critic_output}")
+        
+        if self.config.data.category == "translation":
+            critic_output = critic_output.split("=== Incorrect German words ===")[-1].strip()
+            logger.info(f"critic output whole: {critic_output}")
+
+            result = {}
+            lines = critic_output.strip().split("\n")
+            for line in lines:
+                try:
+                    if ":" in line:
+                        key, value = line.split(":", 1)
+                        result[key.strip()] = value.strip()
+                    else:
+                        pass
+                except Exception as e:
+                    logger.debug(f"Error processing line: '{line}' -> {e}")
+                
+
+        
+            logger.info(f"Final critic output: {result}")
+            return result
+
+        else:
+            critic_output = critic_output.split("=== Feedback ===")[-1].strip()
+            return critic_output
+
+
         
         # expert_segments = critic_output.split("Expert")[1:]
         # matches = []
@@ -140,7 +154,7 @@ class Critic(BaseAgent):
 
         # logger.info(f"Critic output: {output_dict}")
         # logger.debug(f"Critic output completed")
-        return critic_output
+
 
 
 
