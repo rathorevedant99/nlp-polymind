@@ -9,7 +9,7 @@ from datasets import Dataset
 import os
 import logging
 import torch
-
+from typing import List
 logger = logging.getLogger(__name__)
 
 class Expert(BaseAgent):
@@ -106,7 +106,7 @@ class Expert(BaseAgent):
             logger.error(f"Error loading LORA weights for expert {self.expert_id}: {e}", exc_info=True)
             raise e
 
-    def generate(self, task):
+    def generate(self, task: str):
         """
         Generate an expert answer for the given task.
         Args:
@@ -114,19 +114,8 @@ class Expert(BaseAgent):
         Returns:
             str: Generated expert answer
         """
-        # feedback_context = ""
-        # if len(self.feedback) > 0:
-        #     logger.info(f"Feedback is available")
-        #     feedback_context += "\n\n Here are a few german to english translations for reference.\n\n"
-        #     if len(self.feedback) > self.feedback_size:
-        #         feedback_context += "\n".join([f"- {feedback}" for feedback in self.feedback[-self.feedback_size:]])
-        #     else:
-        #         feedback_context += "\n".join([f"- {feedback}" for feedback in self.feedback])
-        
-
-        # expert_prompt = self.default_prompt.format(task) + feedback_context
         expert_prompt = self.default_prompt.format(task)
-        logger.info(f"Expert {self.expert_id} prompt: {expert_prompt}")
+        logger.debug(f"Expert {self.expert_id} prompt: {expert_prompt}")
         
         tokenized_prompt = self.tokenizer(expert_prompt, return_tensors="pt", truncation=True, padding=True, max_length=512)
         
@@ -145,7 +134,7 @@ class Expert(BaseAgent):
                 min_new_tokens=self.config.model_params.min_new_tokens
             )
         decoded_output = self.tokenizer.decode(output[0], skip_special_tokens=True)
-        logger.info(f"Expert {self.expert_id} answer: {decoded_output}")
+        logger.debug(f"Expert {self.expert_id} answer: {decoded_output}")
         
         return decoded_output
     
@@ -154,7 +143,8 @@ class Expert(BaseAgent):
         Continue fine-tuning the expert on the given instruction data from memory.
         """
         def preprocess_function(examples):
-            inputs = examples['instruction'] + "\n" + examples['input']
+            # Process each example in the batch
+            inputs = [instruction + "\n" + inp for instruction, inp in zip(examples['instruction'], examples['input'])]
             targets = examples['output']
             
             model_inputs = self.tokenizer(
@@ -187,10 +177,8 @@ class Expert(BaseAgent):
         future_training_args = TrainingArguments(
             output_dir=f"{self.config.training.output_dir}/expert_{self.expert_id}_continued_ft",
             learning_rate=self.config.training.learning_rate * 0.1,  # Lower learning rate for continued training
-            num_train_epochs=self.config.training.num_train_epochs,
-            logging_steps=self.config.training.logging_steps,
-            save_strategy=self.config.training.save_strategy,
-            evaluation_strategy=self.config.training.evaluation_strategy
+            max_steps=self.config.training.max_steps,
+            logging_steps=self.config.training.logging_steps
         )
 
         data_collator = DataCollatorForLanguageModeling(self.tokenizer, mlm=False)
@@ -204,7 +192,7 @@ class Expert(BaseAgent):
         )
 
         self.trainer.train()
-        self.store_lora(add_to_name="_continued_ft")
+        # self.store_lora(add_to_name="_continued_ft")
 
     def update(self, feedback):
         """

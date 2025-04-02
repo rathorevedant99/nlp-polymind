@@ -6,15 +6,14 @@ critic:
   device: cuda
 
 experts:
-  num_experts: 1
+  num_experts: 3
   type: "seq2seq" # causal
-  name: "google/flan-t5-base" # HuggingFaceTB/SmolLM2-135M
+  name: "google/flan-t5-small" # HuggingFaceTB/SmolLM2-135M
   device: cpu
-  debate_rounds: 15
+  debate_rounds: 5
   feedback_size: 100
-  batch_size: 30
+  batch_size: 15
   
-
 model_params:
   max_new_tokens: 256
   temperature: 0.7
@@ -46,10 +45,6 @@ training:
 
 data:
   data_cache_dir: "./data/cache"
-  # category: "math"
-  # name: "gsm8k"
-  # category: "summarization" # "summarization" or "math"
-  # name: "samsum"
-  category: "translation"
-  name: "opus"
+  category: "summarization" # "summarization" or "math" or "translation"
+  name: "samsum" # "gsm8k" or "samsum" or "opus"
   split: ["train[:10%]+validation[:5%]+test[:5%]"]

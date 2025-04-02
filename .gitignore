@@ -190,3 +190,7 @@ outputs/*
 
 # Wandb
 wandb/*
+
+# Memory
+memory/*
+

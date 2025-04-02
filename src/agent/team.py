@@ -23,7 +23,7 @@ class ExpertTeam:
             raise ValueError("Expert must be an instance of Expert class")
         self.experts.append(expert)
     
-    def get_expert_answers(self, task, feedback=False):
+    def get_expert_answers(self, task: str):
         """
         Get answers from all experts for a given task.
         Args:
@@ -33,5 +33,5 @@ class ExpertTeam:
         """
         model_answers = {}
         for expert in self.experts:
-            model_answers[expert.expert_id] = expert.generate(task, feedback)
+            model_answers[expert.expert_id] = expert.generate(task)
         return model_answers

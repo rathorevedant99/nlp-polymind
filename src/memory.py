@@ -4,31 +4,29 @@ from pathlib import Path
 import pandas as pd
 
 class Memory:
-    def __init__(self, config, save_dir: str = "./memory"):
+    def __init__(self, save_dir: str = "./memory"):
         self.save_dir = Path(save_dir)
         self.save_dir.mkdir(exist_ok=True)
         self.feedback_history = []
-        self.instruction_data = []
-        self.config = config
+        self.instruction_data = None
         
-    def add_critic_feedback(self, original_inputs: List[str], expert_outputs: List[str], critic_feedback: str, expert_id: int):
+    def add_critic_feedback(self, original_inputs: List[str], expert_outputs: List[str], critic_feedback: str):
         """Store feedback from the critic during the debate phase."""
         feedback_entry = {
             "original_inputs": original_inputs,
             "expert_outputs": expert_outputs,
             "critic_feedback": critic_feedback,
-            "expert_id": expert_id,
             "timestamp": pd.Timestamp.now().isoformat()
         }
         self.feedback_history.append(feedback_entry)
         self._save_feedback()
-        
+    
     def format_instruction_data(self):
         """Convert stored feedback into instruction tuning format."""
         self.instruction_data = []
         for entry in self.feedback_history:
             for inp, out, feedback in zip(entry['original_inputs'], entry['expert_outputs'], entry['critic_feedback']):
-                instruction = f"""Based on the critic's feedback, improve the response.
+                instruction = f"""Below is feedback 
 Input: {inp}
 Previous Expert Response: {out}
 Critic's Feedback: {feedback}
@@ -42,6 +40,8 @@ Generate an improved response that addresses the critic's feedback."""
 
     def provide_instruction_data(self):
         """Provide instruction data for training."""
+        if self.instruction_data is None:
+            self.format_instruction_data()
         return self.instruction_data
     
     def _save_feedback(self):
