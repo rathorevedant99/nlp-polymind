@@ -40,16 +40,6 @@ class Critic(BaseAgent):
         Returns:
             str: Best answer along with reasoning
         """
-        
-        # instruction = (
-        #     "You are a critic. You have been given a list of answers by various experts, "
-        #     "along with the ground truth for the given task. You have to evaluate them and "
-        #     "return the one that is closest to the ground truth. Provide a reasoning for your choice, "
-        #     "and also provide insights on the other answers. Keep in mind that the goal is to provide "
-        #     "constructive feedback to the experts. Keep it short and concise."
-        # )
-
-        # logger.info(f"Model:{self.model}")
         logger.info(f"Ground Truth: {ground_truth}")
 
         
@@ -73,18 +63,7 @@ class Critic(BaseAgent):
                 Expert : <instruction>
             """
         else:
-            raise ValueError(f"Invalid category: {config.data.category}")
-
-
-
-
-        # instruction = f"""The expert has been given a task to translate a german sentence to english. Provide a list of only those words that the expert was not able to translate correctly.
-        #     The answer should be in the following format:
-        #     <german word> : <english word>
-        #     <german word> : <english word>
-        #     ...
-        #     Your answer should not contain any other text.
-        # """
+            raise ValueError(f"Invalid category: {self.config.data.category}")
 
         
         prompt = f"{instruction}\n\n=== Expert Answers ===\n\n"
@@ -93,8 +72,7 @@ class Critic(BaseAgent):
 
         prompt += f"=== Task ===\n{task}\n\n"
 
-        prompt += f"=== Ground Truth === \n {ground_truth}\n\n === List of words ===\n"
-        # prompt += f"Provide a maximum of one line feedback for the experts here. \n"
+        prompt += f"=== Ground Truth === \n {ground_truth}\n\n === Feedback ===\n"
 
         # logger.info(f"Prompt to Critic: {prompt}")
         tokenized_prompt = self.tokenizer(prompt, return_tensors="pt", padding=True)
@@ -105,41 +83,13 @@ class Critic(BaseAgent):
             input_ids=tokenized_prompt["input_ids"],
             attention_mask=tokenized_prompt["attention_mask"],  
             pad_token_id=self.tokenizer.eos_token_id,
-            max_new_tokens=self.config.model_params.max_new_tokens,
-            temperature=self.config.model_params.temperature,
-            do_sample=self.config.model_params.do_sample,
-            top_p=self.config.model_params.top_p,
-            num_return_sequences=self.config.model_params.num_return_sequences,
-            min_new_tokens=self.config.model_params.min_new_tokens
+            max_new_tokens=self.config.model_params.max_new_tokens
         )
         critic_output = self.tokenizer.decode(output[0], skip_special_tokens=True)
         # logger.info(f"critic output whole: {critic_output}")
-        critic_output = critic_output.split("=== List of words ===")[-1].strip()
+        critic_output = critic_output.split("=== Feedback ===")[-1].strip()
         logger.info(f"critic output whole: {critic_output}")
         
-        # expert_segments = critic_output.split("Expert")[1:]
-        # matches = []
-        
-        # for segment in expert_segments:
-        #     if match := re.match(r'\s*(\d+)\s*:\s*([^E]+)', segment):
-        #         expert_num, feedback = match.groups()
-        #         matches.append((expert_num, feedback.strip()))
-        
-        # logger.debug(f"Matches: {matches}")
-        
-        # if len(matches) == 0:
-        #     return {num: "" for num in range(len(expert_answers))}
-
-        # output_dict = {int(num): statement.strip() for num, statement in matches}
-        
-        # if len(output_dict) != len(expert_answers):
-        #     logger.warning(f"Missing feedback for some experts. Expected {len(expert_answers)}, got {len(output_dict)}")
-        #     for i in range(len(expert_answers)):
-        #         if i not in output_dict:
-        #             output_dict[i] = ""
-
-        # logger.info(f"Critic output: {output_dict}")
-        # logger.debug(f"Critic output completed")
         return critic_output
 
 

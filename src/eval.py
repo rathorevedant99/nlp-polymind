@@ -7,7 +7,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 class Debate:
-    def __init__(self, config, expert_team, critic):
+    def __init__(self, config, expert_team: ExpertTeam, critic: Critic):
         self.config = config
         self.debate_rounds = config.experts.debate_rounds
         self.expert_team = expert_team
@@ -30,10 +30,12 @@ class Debate:
 
         for debate_round in range(self.debate_rounds):
             logger.info(f"Debate round {debate_round+1} started")
-            feedback = True if debate_round % self.batch_size == 0 else False
 
-            expert_answers = self.expert_team.get_expert_answers(tasks[debate_round], feedback)
-            critic_answer = self.critic(tasks[debate_round], expert_answers, ground_truths[debate_round])
+            task_batch = tasks[debate_round:debate_round+self.batch_size]
+            ground_truth_batch = ground_truths[debate_round:debate_round+self.batch_size]
+
+            expert_answers = self.expert_team.get_expert_answers(task_batch)
+            critic_answer = self.critic(task_batch, expert_answers, ground_truth_batch)
 
             for expert in self.expert_team.experts:
                 expert.update(critic_answer)

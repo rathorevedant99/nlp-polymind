@@ -4,10 +4,10 @@ Team Class
 """
 
 from src.agent.expert import Expert
-
+from typing import List
 class ExpertTeam:
-    def __init__(self, experts=None):
-        self.experts = experts if experts is not None else []
+    def __init__(self, experts: List[Expert]):
+        self.experts = experts
 
         if not all(isinstance(expert, Expert) for expert in self.experts):
             raise ValueError("All experts must be instances of Expert class")
