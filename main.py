@@ -15,6 +15,9 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+from huggingface_hub import login
+
+
 @hydra.main(version_base=None, config_path="configs", config_name="config.yaml")
 def main(config: DictConfig):
     """
@@ -53,12 +56,15 @@ def main(config: DictConfig):
     elif config.data.name == "gsm8k":
         tasks = [task_set["question"] for task_set in shuffled_eval_data]
         ground_truths = [task_set["answer"] for task_set in shuffled_eval_data]
+    elif config.data.name == "opus":
+        tasks = [task_set["de"] for task_set in shuffled_eval_data]
+        ground_truths = [task_set["en"] for task_set in shuffled_eval_data]
     else:
         raise ValueError(f"Invalid dataset name: {config.dataset_name}")
         
     debate.execute_debate(tasks, ground_truths)
 
-    plotter = Plotter(debate.metric_dict)
+    plotter = Plotter(config, debate.metric_dict)
     plotter(hydra_output_path)
 
     # logger.info("Evaluating first answers for unseen data")

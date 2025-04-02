@@ -30,6 +30,11 @@ class Arranger:
             train_data = train_data["train"]
             eval_data = dataset["test"]
             test_data = dataset["test"]
+        elif self.config.data.name == "opus":
+            train_data = dataset["train"].train_test_split(test_size=0.1)
+            eval_data = train_data["test"]
+            train_data = train_data["train"]
+            test_data = dataset["validation"]
         else:
             raise ValueError(f"Invalid dataset name: {self.config.dataset_name}")
         

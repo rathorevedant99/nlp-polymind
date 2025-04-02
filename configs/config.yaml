@@ -2,16 +2,18 @@ mode: prod # Set to dev when testing, otherwise set to prod
 
 critic:
   type: "causal"
-  name:  "google/gemma-2-2b-it" # "google/flan-t5-base"
+  name:  "google/gemma-3-4b-it" # "google/flan-t5-base"
   device: cuda
 
 experts:
-  num_experts: 2
+  num_experts: 1
   type: "seq2seq" # causal
-  name: "google/flan-t5-small" # HuggingFaceTB/SmolLM2-135M
+  name: "google/flan-t5-base" # HuggingFaceTB/SmolLM2-135M
   device: cpu
-  debate_rounds: 5
-  feedback_size: 2
+  debate_rounds: 15
+  feedback_size: 100
+  batch_size: 30
+  
 
 model_params:
   max_new_tokens: 256
@@ -46,6 +48,8 @@ data:
   data_cache_dir: "./data/cache"
   # category: "math"
   # name: "gsm8k"
-  category: "summarization" # "summarization" or "math"
-  name: "samsum"
+  # category: "summarization" # "summarization" or "math"
+  # name: "samsum"
+  category: "translation"
+  name: "opus"
   split: ["train[:10%]+validation[:5%]+test[:5%]"]
