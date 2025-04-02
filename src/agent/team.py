@@ -33,5 +33,5 @@ class ExpertTeam:
         """
         model_answers = {}
         for expert in self.experts:
-            model_answers[expert.expert_id] = expert.generate(task, feedback)
+            model_answers[expert.expert_id] = expert.generate(task)
         return model_answers
