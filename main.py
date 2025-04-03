@@ -9,7 +9,8 @@ from src.agent.critic import Critic
 from src.utils.arranger import Arranger
 from src.utils.plotmetrics import Plotter
 from src.eval import Debate
-import random
+from src.metrics import Metrics
+from src.memory import Memory
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -61,27 +62,63 @@ def main(config: DictConfig):
         ground_truths = [task_set["en"] for task_set in shuffled_eval_data]
     else:
         raise ValueError(f"Invalid dataset name: {config.dataset_name}")
+    
+    metrics = Metrics()
+
+    test_data = test_data.select(range(5))
+    test_tasks = [task_set["dialogue"] for task_set in test_data]
+    test_ground_truths = [task_set["summary"] for task_set in test_data]
+
+    expert_answers = {}
+    before_expert_scores = {}
+    for i, task in enumerate(test_tasks):
+        expert_answers[i] = team.get_expert_answers(task)
+        rouge_score = metrics.eval_rouge(test_ground_truths[i], expert_answers[i])
+        expert0_rouge = rouge_score["0"]["rouge1"].fmeasure
+        expert1_rouge = rouge_score["1"]["rouge1"].fmeasure
+        expert2_rouge = rouge_score["2"]["rouge1"].fmeasure
+        before_expert_scores[i] = [expert0_rouge, expert1_rouge, expert2_rouge]
+
+    expert0_mean_rouge1_before = sum(before_expert_scores[i][0] for i in range(len(before_expert_scores))) / len(before_expert_scores)
+    expert1_mean_rouge1_before = sum(before_expert_scores[i][1] for i in range(len(before_expert_scores))) / len(before_expert_scores)
+    expert2_mean_rouge1_before = sum(before_expert_scores[i][2] for i in range(len(before_expert_scores))) / len(before_expert_scores)
         
-    debate.execute_debate(tasks, ground_truths)
+    memory = debate.execute_debate(tasks, ground_truths)
+    del debate
+    del critic
+    # memory = Memory()
+    # memory.load_feedback()
 
-    plotter = Plotter(config, debate.metric_dict)
-    plotter(hydra_output_path)
+    instruction_data = memory.provide_instruction_data()
 
-    # logger.info("Evaluating first answers for unseen data")
+    for expert in experts:
+        expert.memory_fine_tuning(instruction_data)
 
-    # for task_set in test_data:
-    #     if config.data.name == "samsum":
-    #         task = task_set["dialogue"]
-    #         ground_truth = task_set["summary"]
-    #     elif config.data.name == "gsm8k":
-    #         task = task_set["question"]
-    #         ground_truth = task_set["answer"]
-    #     else:
-    #         raise ValueError(f"Invalid dataset name: {config.dataset_name}")
+    expert_answers = {}
+    after_expert_scores = {}
+    for i, task in enumerate(test_tasks):
+        expert_answers[i] = team.get_expert_answers(task)
+        rouge_score = metrics.eval_rouge(test_ground_truths[i], expert_answers[i])
+        expert0_rouge = rouge_score["0"]["rouge1"].fmeasure
+        expert1_rouge = rouge_score["1"]["rouge1"].fmeasure
+        expert2_rouge = rouge_score["2"]["rouge1"].fmeasure
+        after_expert_scores[i] = [expert0_rouge, expert1_rouge, expert2_rouge]
         
-    #     expert_answer = debate.get_final_answer(task)
-    #     logger.info(f"Ground truth: {ground_truth}")
-    #     logger.info(f"Expert answer: {expert_answer}")
+    expert0_mean_rouge1_after = sum(after_expert_scores[i][0] for i in range(len(after_expert_scores))) / len(after_expert_scores)
+    expert1_mean_rouge1_after = sum(after_expert_scores[i][1] for i in range(len(after_expert_scores))) / len(after_expert_scores)
+    expert2_mean_rouge1_after = sum(after_expert_scores[i][2] for i in range(len(after_expert_scores))) / len(after_expert_scores)
+
+    print(f"Expert 0 mean ROUGE-1 before: {expert0_mean_rouge1_before}")
+    print(f"Expert 1 mean ROUGE-1 before: {expert1_mean_rouge1_before}")
+    print(f"Expert 2 mean ROUGE-1 before: {expert2_mean_rouge1_before}")
+
+    print(f"Expert 0 mean ROUGE-1 after: {expert0_mean_rouge1_after}")
+    print(f"Expert 1 mean ROUGE-1 after: {expert1_mean_rouge1_after}")
+    print(f"Expert 2 mean ROUGE-1 after: {expert2_mean_rouge1_after}")
+
+
+    # plotter = Plotter(config, debate.metric_dict)
+    # plotter(hydra_output_path)
 
 
 if __name__ == "__main__":

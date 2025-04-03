@@ -34,10 +34,11 @@ class Metrics:
 
     def eval_rouge(self, ground_truth: str, expert_answers: dict):
         scorer = rouge_scorer.RougeScorer(['rouge1', 'rouge2', 'rougeL'], use_stemmer=True)
+        expert_scores = {}
         for expert_id, answer in expert_answers.items():
             scores = scorer.score(ground_truth, answer)
-            print(f"Expert {expert_id} rouge scores: {scores}")
-        return scores
+            expert_scores[f"{expert_id}"] = scores
+        return expert_scores
     
     def eval_bertscore(self, ground_truth: str, expert_answers: dict):
         # BERTScore handles stopwords contextually, no need for explicit filtering

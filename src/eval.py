@@ -3,11 +3,13 @@ from src.agent.critic import Critic
 from src.metrics import Metrics
 from typing import List, Dict
 import logging
+from src.memory import Memory
+from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 
 class Debate:
-    def __init__(self, config, expert_team, critic):
+    def __init__(self, config, expert_team: ExpertTeam, critic: Critic):
         self.config = config
         self.debate_rounds = config.experts.debate_rounds
         self.expert_team = expert_team
@@ -26,31 +28,30 @@ class Debate:
         """
         Execute a debate between the experts and the critic.
         """
-        metrics = Metrics()
+        memory = Memory()
 
-        for debate_round in range(self.debate_rounds):
-            logger.info(f"Debate round {debate_round+1} started")
-            feedback = True if debate_round % self.batch_size == 0 else False
+        batched_tasks = [tasks[i:i+self.batch_size] for i in range(0, len(tasks), self.batch_size)]
+        batched_ground_truths = [ground_truths[i:i+self.batch_size] for i in range(0, len(ground_truths), self.batch_size)]
 
-            expert_answers = self.expert_team.get_expert_answers(tasks[debate_round], feedback)
-            critic_answer = self.critic(tasks[debate_round], expert_answers, ground_truths[debate_round])
+        counter = 0
+        max_rounds = self.config.experts.debate_rounds
 
-            for expert in self.expert_team.experts:
-                expert.update(critic_answer)
+        for task_batch, ground_truth_batch in tqdm(zip(batched_tasks, batched_ground_truths), total=max_rounds, desc="Debate"):
+            expert_answers = {}
+            for task in task_batch:
+                expert_answers[task] = self.expert_team.get_expert_answers(task)
 
-            rouge_scores, bertscore_scores, novelty_scores, length_ratios = metrics(ground_truths[debate_round], expert_answers)
-            self.metric_dict[f"{debate_round+1}"] = {
-                "rouge_scores": rouge_scores,
-                "bertscore_scores": bertscore_scores,
-                "novelty_scores": novelty_scores,
-                "length_ratios": length_ratios
-            }
-            logger.info(f"Debate round {debate_round+1} completed")
+            expert_answers = [expert_answers[task] for task in task_batch]
+            
+            critic_feedback = self.critic(task_batch, expert_answers, ground_truth_batch)
 
-        
-        self._have_debated = True
-        logger.info(f"Debate completed")
-        logger.debug(f"Metric dict: {self.metric_dict}")
+            memory.add_critic_feedback(original_inputs=task_batch, expert_outputs=expert_answers, critic_feedback=critic_feedback)
+            
+            counter += 1
+            if counter == max_rounds:
+                break
+
+        return memory
     
     def get_final_answer(self, task: str):
         """
