@@ -67,15 +67,14 @@ class Critic(BaseAgent):
             raise ValueError(f"Invalid category: {config.data.category}")
 
 
-        
         prompt = f"{instruction}\n\n"
-        prompt += f"=== German Sentence ===\n{task}\n\n"
+        prompt += f"German Sentence: {task}\n\n"
 
-        prompt += f"=== Expert Answers ===\n\n"
+        prompt += f"Expert Answers: \n"
         for i, answer in enumerate(expert_answers):
             prompt += f"Expert {i}: {expert_answers[i]}\n\n"
 
-        prompt += f"=== Ground Truth === \n {ground_truth}\n\n"
+        prompt += f"Ground Truth: {ground_truth}\n\n"
         if self.config.data.category == "translation":
             prompt += f"=== Incorrect German words ===\n"
         elif self.config.data.category == "summarization":
