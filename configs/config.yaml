@@ -43,6 +43,7 @@ training:
   logging_steps: 20
   learning_rate: 1e-5
   weight_decay: 0.01
+  label_names: ["labels"]
 
 data:
   data_cache_dir: "./data/cache"
