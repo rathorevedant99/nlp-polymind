@@ -46,6 +46,7 @@ def main(config: DictConfig):
     team = ExpertTeam(experts)
 
     critic = Critic(config)
+    logger.info("Critic ready")
     debate = Debate(config, team, critic)
 
     logger.info("Starting debate")
