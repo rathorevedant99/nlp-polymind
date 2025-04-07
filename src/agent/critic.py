@@ -91,7 +91,6 @@ class Critic(BaseAgent):
         prompt += f"=== Ground Truth === \n {ground_truth}\n\n === Feedback ===\n"
 
         if self.is_openrouter:
-            logger.info(f"Prompt to Critic: {prompt}")
             critic_output = self.client.get_completion(
                 self.config.critic.name, 
                 [{"role": "user", "content": prompt}],
@@ -147,7 +146,6 @@ class Critic(BaseAgent):
         logger.debug(f"Prompt to Critic for batch: {prompt}")
 
         if self.is_openrouter:
-            logger.info(f"Prompt to Critic for batch: {prompt}")
             critic_output = self.client.get_completion(
                 self.config.critic.name, 
                 [{ "role": "system", "content": self.instruction_batch},

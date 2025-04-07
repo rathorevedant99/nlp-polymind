@@ -37,7 +37,7 @@ def main(config: DictConfig):
     """
     Loads the config and runs the experiment.
     """
-    runs = 2
+    runs = 10
 
     data = pd.DataFrame(columns=["run", "expert_id", "before", "after"])
 
@@ -88,12 +88,6 @@ def main(config: DictConfig):
         test_ground_truths = [task_set["summary"] for task_set in test_data]
 
         before_expert_scores = expert_test_evaluation(team, test_tasks, test_ground_truths, metrics)
-
-        # Calculate mean scores for each expert before debate
-        # before_mean_scores = []
-        # for expert_idx in range(num_experts):
-        #     mean_score = sum(before_expert_scores[i][expert_idx] for i in range(len(before_expert_scores))) / len(before_expert_scores)
-        #     before_mean_scores.append(mean_score)
             
         memory = debate.execute_debate(tasks, ground_truths)
         del debate
@@ -107,13 +101,13 @@ def main(config: DictConfig):
         after_expert_scores = expert_test_evaluation(team, test_tasks, test_ground_truths, metrics)
 
         for i in range(len(before_expert_scores)):
-            data = pd.concat([data, pd.DataFrame({
-                "run": [run],
-                "expert_id": [i],
-                "before": [before_expert_scores[i]],
-                "after": [after_expert_scores[i]],
-                "hydra_output_path": [hydra_output_path]
-            })], ignore_index=True)
+            for expert_idx in range(len(before_expert_scores[i])):
+                data = pd.concat([data, pd.DataFrame({
+                    "run": [run+1],
+                    "expert_id": [expert_idx],
+                    "before": [before_expert_scores[i][expert_idx]],
+                    "after": [after_expert_scores[i][expert_idx]]
+                })], ignore_index=True)
     
     data.to_csv(hydra_output_path + "/expert_run_performance.csv", index=False)
     plot_expert_run_performance(data, hydra_output_path + "/expert_run_performance.png")
