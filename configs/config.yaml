@@ -4,6 +4,7 @@ critic:
   type: "causal"
   name:  "google/gemma-3-4b-it" # "google/flan-t5-base"
   device: cuda
+  is_openrouter: true
 
 experts:
   num_experts: 3
