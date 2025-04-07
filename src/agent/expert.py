@@ -49,9 +49,10 @@ class Expert(BaseAgent):
         self.model.print_trainable_parameters()
 
         self.training_args = TrainingArguments(**config.training)
-
-        self.feedback = []
         self.feedback_size = config.experts.feedback_size
+
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.model.to(self.device)
     
     def fine_tune_unsloth(self):
         """

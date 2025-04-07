@@ -12,6 +12,7 @@ from src.metrics import Metrics
 from src.utils.plot_exp import plot_expert_run_performance, plot_expert_summary
 import logging
 import pandas as pd
+from tqdm import tqdm
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -42,7 +43,7 @@ def main(config: DictConfig):
     data = pd.DataFrame(columns=["run", "expert_id", "before", "after"])
 
     hydra_output_path = hydra.core.hydra_config.HydraConfig.get().runtime.output_dir
-    for run in range(runs):
+    for run in tqdm(range(runs), desc=f"Runs for num_experts = {config.experts.num_experts}"):
         arranger = Arranger(config)
         expert_datasets, eval_data, test_data = arranger.create_datasets()
 
@@ -95,8 +96,8 @@ def main(config: DictConfig):
 
         instruction_data = memory.provide_instruction_data()
 
-        # for expert in experts:
-        #     expert.memory_fine_tuning(instruction_data)
+        for expert in experts:
+            expert.memory_fine_tuning(instruction_data)
 
         after_expert_scores = expert_test_evaluation(team, test_tasks, test_ground_truths, metrics)
 
@@ -110,9 +111,8 @@ def main(config: DictConfig):
                 })], ignore_index=True)
     
     data.to_csv(hydra_output_path + "/expert_run_performance.csv", index=False)
-    plot_expert_run_performance(data, hydra_output_path + "/expert_run_performance.png")
-    plot_expert_summary(data, hydra_output_path + "/expert_summary.png")
-
+    plot_expert_run_performance(data, hydra_output_path + f"/{config.experts.num_experts}_experts_run_performance.png")
+    plot_expert_summary(data, hydra_output_path + f"/{config.experts.num_experts}_experts_summary.png")
 
 if __name__ == "__main__":
     main()

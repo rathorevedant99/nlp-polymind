@@ -10,10 +10,10 @@ experts:
   num_experts: 3
   type: "seq2seq" # causal
   name: "google/flan-t5-small" # HuggingFaceTB/SmolLM2-135M
-  device: cpu
-  debate_rounds: 5
+  device: cuda
+  debate_rounds: 10
   feedback_size: 100
-  batch_size: 15
+  batch_size: 30
   
 model_params:
   max_new_tokens: 256
@@ -43,7 +43,6 @@ training:
   logging_steps: 20
   learning_rate: 1e-5
   weight_decay: 0.01
-  label_names: ["labels"]
 
 data:
   data_cache_dir: "./data/cache"

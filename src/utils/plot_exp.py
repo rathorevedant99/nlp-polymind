@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 
-data = pd.read_csv("/Users/vedantrathore/VSCode Working Folder/nlp-polymind/outputs/2025-04-07/04-15-05/expert_run_performance.csv")
+# data = pd.read_csv("/workspace/nlp-polymind/outputs/2025-04-07/04-10-01/expert_run_performance.csv")
 
 def plot_expert_run_performance(data: pd.DataFrame, save_path: str):
     # Calculate mean performance for each expert in each run
@@ -38,11 +38,11 @@ def plot_expert_run_performance(data: pd.DataFrame, save_path: str):
                            color=colors[i % len(colors)], alpha=0.9)
 
         # Add value labels
-        for j, (before, after) in enumerate(zip(expert_data['before'], expert_data['after'])):
-            ax.text(x[j] + group_offset, before + 0.01, f'{before:.3f}', 
-                   ha='center', va='bottom', fontsize=8)
-            ax.text(x[j] + group_offset + width, after + 0.01, f'{after:.3f}', 
-                   ha='center', va='bottom', fontsize=8)
+        # for j, (before, after) in enumerate(zip(expert_data['before'], expert_data['after'])):
+        #     ax.text(x[j] + group_offset, before + 0.01, f'{before:.3f}', 
+        #            ha='center', va='bottom', fontsize=8)
+        #     ax.text(x[j] + group_offset + width, after + 0.01, f'{after:.3f}', 
+        #            ha='center', va='bottom', fontsize=8)
 
     # Adjust plot settings
     ax.set_xticks(x)
@@ -91,6 +91,3 @@ def plot_expert_summary(data: pd.DataFrame, save_path: str):
     plt.tight_layout()
     plt.savefig(save_path, dpi=300)
     plt.close()
-
-plot_expert_run_performance(data, "/Users/vedantrathore/VSCode Working Folder/nlp-polymind/outputs/2025-04-07/04-15-05/expert_run_performance.png")
-plot_expert_summary(data, "/Users/vedantrathore/VSCode Working Folder/nlp-polymind/outputs/2025-04-07/04-15-05/expert_summary.png")
