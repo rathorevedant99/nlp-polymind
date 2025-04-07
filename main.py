@@ -7,11 +7,11 @@ from src.agent.expert import Expert
 from src.agent.team import ExpertTeam
 from src.agent.critic import Critic
 from src.utils.arranger import Arranger
-from src.utils.plotmetrics import Plotter
 from src.eval import Debate
 from src.metrics import Metrics
-from src.memory import Memory
+from src.utils.plot_exp import plot_expert_run_performance, plot_expert_summary
 import logging
+import pandas as pd
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -65,7 +65,7 @@ def main(config: DictConfig):
     
     metrics = Metrics()
 
-    test_data = test_data.select(range(5))
+    test_data = test_data.select(range(10))
     test_tasks = [task_set["dialogue"] for task_set in test_data]
     test_ground_truths = [task_set["summary"] for task_set in test_data]
 
@@ -74,20 +74,22 @@ def main(config: DictConfig):
     for i, task in enumerate(test_tasks):
         expert_answers[i] = team.get_expert_answers(task)
         rouge_score = metrics.eval_rouge(test_ground_truths[i], expert_answers[i])
-        expert0_rouge = rouge_score["0"]["rouge1"].fmeasure
-        expert1_rouge = rouge_score["1"]["rouge1"].fmeasure
-        expert2_rouge = rouge_score["2"]["rouge1"].fmeasure
-        before_expert_scores[i] = [expert0_rouge, expert1_rouge, expert2_rouge]
+        
+        # Store scores for each expert dynamically
+        expert_scores = []
+        for expert_idx in range(num_experts):
+            expert_scores.append(rouge_score[str(expert_idx)]["rouge1"].fmeasure)
+        before_expert_scores[i] = expert_scores
 
-    expert0_mean_rouge1_before = sum(before_expert_scores[i][0] for i in range(len(before_expert_scores))) / len(before_expert_scores)
-    expert1_mean_rouge1_before = sum(before_expert_scores[i][1] for i in range(len(before_expert_scores))) / len(before_expert_scores)
-    expert2_mean_rouge1_before = sum(before_expert_scores[i][2] for i in range(len(before_expert_scores))) / len(before_expert_scores)
+    # Calculate mean scores for each expert before debate
+    before_mean_scores = []
+    for expert_idx in range(num_experts):
+        mean_score = sum(before_expert_scores[i][expert_idx] for i in range(len(before_expert_scores))) / len(before_expert_scores)
+        before_mean_scores.append(mean_score)
         
     memory = debate.execute_debate(tasks, ground_truths)
     del debate
     del critic
-    # memory = Memory()
-    # memory.load_feedback()
 
     instruction_data = memory.provide_instruction_data()
 
@@ -99,27 +101,32 @@ def main(config: DictConfig):
     for i, task in enumerate(test_tasks):
         expert_answers[i] = team.get_expert_answers(task)
         rouge_score = metrics.eval_rouge(test_ground_truths[i], expert_answers[i])
-        expert0_rouge = rouge_score["0"]["rouge1"].fmeasure
-        expert1_rouge = rouge_score["1"]["rouge1"].fmeasure
-        expert2_rouge = rouge_score["2"]["rouge1"].fmeasure
-        after_expert_scores[i] = [expert0_rouge, expert1_rouge, expert2_rouge]
         
-    expert0_mean_rouge1_after = sum(after_expert_scores[i][0] for i in range(len(after_expert_scores))) / len(after_expert_scores)
-    expert1_mean_rouge1_after = sum(after_expert_scores[i][1] for i in range(len(after_expert_scores))) / len(after_expert_scores)
-    expert2_mean_rouge1_after = sum(after_expert_scores[i][2] for i in range(len(after_expert_scores))) / len(after_expert_scores)
+        # Store scores for each expert dynamically
+        expert_scores = []
+        for expert_idx in range(num_experts):
+            expert_scores.append(rouge_score[str(expert_idx)]["rouge1"].fmeasure)
+        after_expert_scores[i] = expert_scores
+        
+    # Calculate mean scores for each expert after debate
+    after_mean_scores = []
+    for expert_idx in range(num_experts):
+        mean_score = sum(after_expert_scores[i][expert_idx] for i in range(len(after_expert_scores))) / len(after_expert_scores)
+        after_mean_scores.append(mean_score)
 
-    print(f"Expert 0 mean ROUGE-1 before: {expert0_mean_rouge1_before}")
-    print(f"Expert 1 mean ROUGE-1 before: {expert1_mean_rouge1_before}")
-    print(f"Expert 2 mean ROUGE-1 before: {expert2_mean_rouge1_before}")
-
-    print(f"Expert 0 mean ROUGE-1 after: {expert0_mean_rouge1_after}")
-    print(f"Expert 1 mean ROUGE-1 after: {expert1_mean_rouge1_after}")
-    print(f"Expert 2 mean ROUGE-1 after: {expert2_mean_rouge1_after}")
-
-
-    # plotter = Plotter(config, debate.metric_dict)
-    # plotter(hydra_output_path)
+    # Print results for all experts
+    return before_mean_scores, after_mean_scores, hydra_output_path
 
 
 if __name__ == "__main__":
-    main()
+    runs = 2
+
+    data = pd.DataFrame(columns=["run", "expert_id", "before", "after"])
+
+    for run in range(runs):
+        before_mean_scores, after_mean_scores, hydra_output_path = main()
+        for i in range(len(before_mean_scores)):
+            data = data.append({"run": run, "expert_id": i, "before": before_mean_scores[i], "after": after_mean_scores[i], "hydra_output_path": hydra_output_path}, ignore_index=True)
+
+    plot_expert_run_performance(data, hydra_output_path + "/expert_run_performance.png")
+    plot_expert_summary(data, hydra_output_path + "/expert_summary.png")
