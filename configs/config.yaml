@@ -4,12 +4,13 @@ critic:
   type: "causal"
   name:  "google/gemma-3-4b-it" # "google/flan-t5-base"
   device: cuda
+  is_openrouter: false
 
 experts:
   num_experts: 3
   type: "seq2seq" # causal
   name: "google/flan-t5-small" # HuggingFaceTB/SmolLM2-135M
-  device: cpu
+  device: cuda
   debate_rounds: 5
   feedback_size: 100
   batch_size: 15

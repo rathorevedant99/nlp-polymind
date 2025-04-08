@@ -28,7 +28,7 @@ class Debate:
         """
         Execute a debate between the experts and the critic.
         """
-        memory = Memory()
+        memory = Memory(task_name=self.config.data.category)
 
         batched_tasks = [tasks[i:i+self.batch_size] for i in range(0, len(tasks), self.batch_size)]
         batched_ground_truths = [ground_truths[i:i+self.batch_size] for i in range(0, len(ground_truths), self.batch_size)]
