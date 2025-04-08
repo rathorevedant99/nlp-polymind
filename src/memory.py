@@ -6,7 +6,7 @@ import pandas as pd
 class Memory:
     def __init__(self, save_dir: str = "./memory", task_name: str = ""):
         self.save_dir = Path(save_dir) / task_name
-        self.save_dir.mkdir(exist_ok=True)
+        self.save_dir.mkdir(parents=True, exist_ok=True)
         self.feedback_history = []
         self.instruction_data = None
         

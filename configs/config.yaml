@@ -4,16 +4,16 @@ critic:
   type: "causal"
   name:  "google/gemma-3-4b-it" # "google/flan-t5-base"
   device: cuda
-  is_openrouter: true
+  is_openrouter: false
 
 experts:
   num_experts: 3
   type: "seq2seq" # causal
   name: "google/flan-t5-small" # HuggingFaceTB/SmolLM2-135M
   device: cuda
-  debate_rounds: 10
+  debate_rounds: 5
   feedback_size: 100
-  batch_size: 30
+  batch_size: 15
   
 model_params:
   max_new_tokens: 256

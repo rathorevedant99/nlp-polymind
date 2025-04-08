@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 
-# data = pd.read_csv("/workspace/nlp-polymind/outputs/2025-04-07/04-10-01/expert_run_performance.csv")
+# data = pd.read_csv("/workspace/nlp-polymind/outputs/2025-04-07/20-43-07/expert_run_performance.csv")
 
 def plot_expert_run_performance(data: pd.DataFrame, save_path: str):
     # Calculate mean performance for each expert in each run
