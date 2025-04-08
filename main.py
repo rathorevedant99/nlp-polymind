@@ -79,7 +79,8 @@ def main(config: DictConfig):
 
         before_expert_scores = expert_test_evaluation(team, test_tasks, test_ground_truths, metrics)
             
-        memory = debate.execute_debate(tasks, ground_truths)
+        append_memory = run > 0
+        memory = debate.execute_debate(tasks, ground_truths, append=append_memory)
         del debate
         del critic
 
@@ -100,8 +101,8 @@ def main(config: DictConfig):
                 })], ignore_index=True)
     
     data.to_csv(hydra_output_path + "/expert_run_performance.csv", index=False)
-    plot_expert_run_performance(data, hydra_output_path + "/no_prior_ft_experts_run_performance.png")
-    plot_expert_summary(data, hydra_output_path + "/no_prior_ft_experts_summary.png")
+    plot_expert_run_performance(data, hydra_output_path + "/succesive_memory_experts_run_performance.png")
+    plot_expert_summary(data, hydra_output_path + "/succesive_memory_experts_summary.png")
 
 if __name__ == "__main__":
     main()

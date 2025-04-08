@@ -24,11 +24,19 @@ class Debate:
         if not isinstance(critic, Critic):
             raise ValueError("Critic must be an instance of Critic class")
 
-    def execute_debate(self, tasks: List[str], ground_truths: List[str]):
+    def execute_debate(self, tasks: List[str], ground_truths: List[str], append: bool = False):
         """
         Execute a debate between the experts and the critic.
+        
+        Args:
+            tasks: List of tasks to debate
+            ground_truths: List of ground truths for the tasks
+            append: Whether to append to existing memory file (default: False)
         """
         memory = Memory(task_name=self.config.data.category)
+        
+        if append:
+            memory.load_feedback()
 
         batched_tasks = [tasks[i:i+self.batch_size] for i in range(0, len(tasks), self.batch_size)]
         batched_ground_truths = [ground_truths[i:i+self.batch_size] for i in range(0, len(ground_truths), self.batch_size)]
@@ -45,9 +53,11 @@ class Debate:
             
             critic_feedback = self.critic(task_batch, expert_answers, ground_truth_batch)
 
-            memory.add_critic_feedback(original_inputs=task_batch, expert_outputs=expert_answers, critic_feedback=critic_feedback)
+            # Always append to the file, but don't append to memory if we've already loaded it
+            memory.add_critic_feedback(original_inputs=task_batch, expert_outputs=expert_answers, critic_feedback=critic_feedback, append=append)
             
             counter += 1
+        
             if counter == max_rounds:
                 break
 

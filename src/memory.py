@@ -10,7 +10,7 @@ class Memory:
         self.feedback_history = []
         self.instruction_data = None
         
-    def add_critic_feedback(self, original_inputs: List[str], expert_outputs: List[str], critic_feedback: str):
+    def add_critic_feedback(self, original_inputs: List[str], expert_outputs: List[str], critic_feedback: str, append: bool = False):
         """Store feedback from the critic during the debate phase."""
         feedback_entry = {
             "original_inputs": original_inputs,
@@ -18,8 +18,12 @@ class Memory:
             "critic_feedback": critic_feedback,
             "timestamp": pd.Timestamp.now().isoformat()
         }
+        
+        # Add to memory
         self.feedback_history.append(feedback_entry)
-        self._save_feedback()
+        
+        # Save to file
+        self._save_feedback(append=append)
     
     def format_instruction_data(self):
         """Convert stored feedback into instruction tuning format."""
@@ -44,11 +48,25 @@ Generate an improved response that addresses the critic's feedback."""
             self.format_instruction_data()
         return self.instruction_data
     
-    def _save_feedback(self):
+    def _save_feedback(self, append: bool = False):
         """Save feedback history to disk."""
         feedback_file = self.save_dir / "feedback_history.json"
-        with open(feedback_file, 'w') as f:
-            json.dump(self.feedback_history, f, indent=2)
+        
+        if append and feedback_file.exists():
+            # Load existing feedback
+            with open(feedback_file, 'r') as f:
+                existing_feedback = json.load(f)
+            
+            # Append only the new entries
+            existing_feedback.extend(self.feedback_history)
+            
+            # Save combined feedback
+            with open(feedback_file, 'w') as f:
+                json.dump(existing_feedback, f, indent=2)
+        else:
+            # Create new file or overwrite existing one
+            with open(feedback_file, 'w') as f:
+                json.dump(self.feedback_history, f, indent=2)
             
     def load_feedback(self):
         """Load feedback history from disk."""
@@ -57,8 +75,8 @@ Generate an improved response that addresses the critic's feedback."""
             with open(feedback_file, 'r') as f:
                 self.feedback_history = json.load(f)
                 
-    def clear_memory(self):
+    def clear_memory(self, append: bool = False):
         """Clear all stored feedback and instruction data."""
         self.feedback_history = []
         self.instruction_data = []
-        self._save_feedback()
+        self._save_feedback(append=append)
