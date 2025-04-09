@@ -5,6 +5,7 @@ from typing import List, Dict
 import logging
 from src.memory import Memory
 from tqdm import tqdm
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +25,7 @@ class Debate:
         if not isinstance(critic, Critic):
             raise ValueError("Critic must be an instance of Critic class")
 
-    def execute_debate(self, tasks: List[str], ground_truths: List[str], append: bool = False):
+    def execute_debate(self, tasks: List[str], ground_truths: List[str], append: bool = True):
         """
         Execute a debate between the experts and the critic.
         
@@ -34,9 +35,6 @@ class Debate:
             append: Whether to append to existing memory file (default: False)
         """
         memory = Memory(task_name=self.config.data.category)
-        
-        if append:
-            memory.load_feedback()
 
         batched_tasks = [tasks[i:i+self.batch_size] for i in range(0, len(tasks), self.batch_size)]
         batched_ground_truths = [ground_truths[i:i+self.batch_size] for i in range(0, len(ground_truths), self.batch_size)]
@@ -53,8 +51,7 @@ class Debate:
             
             critic_feedback = self.critic(task_batch, expert_answers, ground_truth_batch)
 
-            # Always append to the file, but don't append to memory if we've already loaded it
-            memory.add_critic_feedback(original_inputs=task_batch, expert_outputs=expert_answers, critic_feedback=critic_feedback, append=append)
+            memory.add_critic_feedback(task_batch, expert_answers, critic_feedback, append)
             
             counter += 1
         

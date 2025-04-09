@@ -13,7 +13,7 @@ experts:
   device: cuda
   debate_rounds: 5
   feedback_size: 100
-  batch_size: 2
+  batch_size: 10
   
 model_params:
   max_new_tokens: 256

@@ -176,7 +176,7 @@ class Expert(BaseAgent):
         dataset = dataset.map(preprocess_function, batched=True)
 
         future_training_args = TrainingArguments(
-            output_dir=f"{self.config.training.output_dir}/expert_{self.expert_id}_continued_ft",
+            save_strategy="no",
             learning_rate=self.config.training.learning_rate * 0.1,  # Lower learning rate for continued training
             max_steps=self.config.training.max_steps,
             logging_steps=self.config.training.logging_steps

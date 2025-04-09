@@ -10,8 +10,11 @@ class Memory:
         self.feedback_history = []
         self.instruction_data = None
         
-    def add_critic_feedback(self, original_inputs: List[str], expert_outputs: List[str], critic_feedback: str, append: bool = False):
+    def add_critic_feedback(self, original_inputs: List[str], expert_outputs: List[str], critic_feedback: str, append: bool = True):
         """Store feedback from the critic during the debate phase."""
+        if append:
+            self.load_feedback()
+        
         feedback_entry = {
             "original_inputs": original_inputs,
             "expert_outputs": expert_outputs,
@@ -23,12 +26,21 @@ class Memory:
         self.feedback_history.append(feedback_entry)
         
         # Save to file
-        self._save_feedback(append=append)
+        self._save_feedback()
     
-    def format_instruction_data(self):
-        """Convert stored feedback into instruction tuning format."""
+    def format_instruction_data(self, load_all: bool = False):
+        """
+        Convert stored feedback into instruction tuning format.
+        
+        Args:
+            load_all: If True, load all feedback from disk before formatting
+        """
         self.instruction_data = []
-        for entry in self.feedback_history:
+        
+        # If load_all is True, get all feedback from disk
+        feedback_to_process = self.get_all_feedback() if load_all else self.feedback_history
+        
+        for entry in feedback_to_process:
             for inp, out, feedback in zip(entry['original_inputs'], entry['expert_outputs'], entry['critic_feedback']):
                 instruction = f"""Below is feedback 
 Input: {inp}
@@ -42,31 +54,22 @@ Generate an improved response that addresses the critic's feedback."""
                     "output": feedback
                 })
 
-    def provide_instruction_data(self):
-        """Provide instruction data for training."""
+    def provide_instruction_data(self, load_all: bool = False):
+        """
+        Provide instruction data for training.
+        
+        Args:
+            load_all: If True, load all feedback from disk before formatting
+        """
         if self.instruction_data is None:
-            self.format_instruction_data()
+            self.format_instruction_data(load_all=load_all)
         return self.instruction_data
     
-    def _save_feedback(self, append: bool = False):
+    def _save_feedback(self):
         """Save feedback history to disk."""
         feedback_file = self.save_dir / "feedback_history.json"
-        
-        if append and feedback_file.exists():
-            # Load existing feedback
-            with open(feedback_file, 'r') as f:
-                existing_feedback = json.load(f)
-            
-            # Append only the new entries
-            existing_feedback.extend(self.feedback_history)
-            
-            # Save combined feedback
-            with open(feedback_file, 'w') as f:
-                json.dump(existing_feedback, f, indent=2)
-        else:
-            # Create new file or overwrite existing one
-            with open(feedback_file, 'w') as f:
-                json.dump(self.feedback_history, f, indent=2)
+        with open(feedback_file, 'w') as f:
+            json.dump(self.feedback_history, f, indent=2)
             
     def load_feedback(self):
         """Load feedback history from disk."""
@@ -78,5 +81,5 @@ Generate an improved response that addresses the critic's feedback."""
     def clear_memory(self, append: bool = False):
         """Clear all stored feedback and instruction data."""
         self.feedback_history = []
-        self.instruction_data = []
-        self._save_feedback(append=append)
+        self.instruction_data = None
+        # self._save_feedback(append=append)
