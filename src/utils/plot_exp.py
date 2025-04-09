@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 
-data = pd.read_csv("/Users/vedantrathore/VSCode Working Folder/nlp-polymind/local/compile.csv")
+data = pd.read_csv("/Users/vedantrathore/VSCode Working Folder/nlp-polymind/data/compile.csv")
 
 def plot_expert_run_performance(data: pd.DataFrame, save_path: str):
     # Calculate mean performance for each expert in each run
@@ -93,6 +93,8 @@ def plot_expert_summary(data: pd.DataFrame, save_path: str):
     plt.close()
 
 def plot_expert_summary_every_n_runs(data: pd.DataFrame, n: int, save_path: str):
+    """This is shit code written by Claude. I'm not proud of it.
+    Do not use it as a reference for your own code."""
     # Get all unique runs and sort them
     all_runs = sorted(data['run'].unique())
     max_run = max(all_runs)
@@ -117,7 +119,7 @@ def plot_expert_summary_every_n_runs(data: pd.DataFrame, n: int, save_path: str)
     n_experts = len(experts)
     
     # Calculate spacing between groups dynamically
-    spacing = 0.5  # Base spacing
+    spacing = 0.75  # Reduced spacing between groups
     
     # For each summary point (every n runs)
     for i, end_run in enumerate(summary_points):
@@ -134,26 +136,15 @@ def plot_expert_summary_every_n_runs(data: pd.DataFrame, n: int, save_path: str)
         summary.columns = ['_'.join(col).strip('_') for col in summary.columns.values]
         
         # Calculate x position for this group of bars
-        group_offset = i * (4 * width + spacing)  # 4 bars per group (2 experts × 2 conditions)
+        group_offset = i * (n_experts * 2 * width + spacing)  # Space for all experts
         
         # Plot bars for each expert
         for j, expert in enumerate(experts):
             expert_data = summary[summary['expert_id'] == expert]
             
             # Calculate position within the group
-            # For expert 0 and 1, place them next to each other
-            if expert in [0, 1]:
-                # Expert 0: left side, Expert 1: right side
-                if expert == 0:
-                    before_pos = group_offset - width
-                    after_pos = group_offset - width/2
-                else:  # expert == 1
-                    before_pos = group_offset + width/2
-                    after_pos = group_offset + width
-            else:
-                # For other experts, place them with spacing
-                before_pos = group_offset + (j-1) * 2 * width
-                after_pos = group_offset + (j-1) * 2 * width + width
+            before_pos = group_offset + j * 2 * width
+            after_pos = before_pos + width
             
             # Plot before bars
             before_bars = ax.bar(before_pos, 
@@ -187,7 +178,7 @@ def plot_expert_summary_every_n_runs(data: pd.DataFrame, n: int, save_path: str)
     tick_positions = []
     tick_labels = []
     for i, end_run in enumerate(summary_points):
-        center_pos = i * (4 * width + spacing) + width  # Center of the group
+        center_pos = i * (n_experts * 2 * width + spacing) + (n_experts - 1) * width  # Center of the group
         tick_positions.append(center_pos)
         tick_labels.append(f'Run {end_run}')
     
@@ -211,7 +202,7 @@ def plot_expert_summary_every_n_runs(data: pd.DataFrame, n: int, save_path: str)
     plt.close()
 
 # Fix the function call at the bottom
-plot_expert_summary_every_n_runs(data, 5, "/Users/vedantrathore/VSCode Working Folder/nlp-polymind/local/compile_summary_every_5_runs.png")
+plot_expert_summary_every_n_runs(data, 5, "/Users/vedantrathore/VSCode Working Folder/nlp-polymind/data/compile_summary_every_5_runs.png")
 
 # Comment out the incorrect function call
 # plot_expert_summary_with_runs(data, "/Users/vedantrathore/VSCode Working Folder/nlp-polymind/local/compile_summary_with_runs.png")
