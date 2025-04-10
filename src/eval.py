@@ -1,11 +1,9 @@
 from src.agent.team import ExpertTeam
 from src.agent.critic import Critic
-from src.metrics import Metrics
 from typing import List, Dict
 import logging
 from src.memory import Memory
 from tqdm import tqdm
-import pandas as pd
 
 logger = logging.getLogger(__name__)
 
@@ -44,15 +42,17 @@ class Debate:
 
         for task_batch, ground_truth_batch in tqdm(zip(batched_tasks, batched_ground_truths), total=max_rounds, desc="Debate"):
             expert_answers = {}
+            logger.debug(f"Debating task batch.")
             for task in task_batch:
                 expert_answers[task] = self.expert_team.get_expert_answers(task)
 
             expert_answers = [expert_answers[task] for task in task_batch]
-            
-            critic_feedback = self.critic(task_batch, expert_answers, ground_truth_batch)
+            logger.debug(f"Generated expert answers.")
 
+            critic_feedback = self.critic(task_batch, expert_answers, ground_truth_batch)
+            logger.debug(f"Generated critic feedback.")
             memory.add_critic_feedback(task_batch, expert_answers, critic_feedback, append)
-            
+            logger.debug(f"Added critic feedback to memory.")
             counter += 1
         
             if counter == max_rounds:

@@ -32,6 +32,8 @@ def expert_test_evaluation(team, test_tasks, test_ground_truths, metrics):
             exp_scores.append(rouge_score[str(expert_idx)]["rouge1"].fmeasure)
         expert_scores[i] = exp_scores
 
+    logger.info(f"Expert answers: {expert_answers}")
+
     return expert_scores
         
 
@@ -63,7 +65,7 @@ def main(config: DictConfig):
             logger.info(f"Ready expert {i}")
 
             try:
-                expert.fine_tune_std_lora(save=True)
+                expert.fine_tune_std_lora(save=False)
                 logger.info(f"Fine-tuned expert {i}")
             except Exception as e:
                 logger.error(f"Error fine-tuning expert {i}: {e}")
@@ -77,16 +79,15 @@ def main(config: DictConfig):
 
         logger.info("Starting debate")
 
-        shuffled_eval_data = eval_data.shuffle(seed=run)
         if config.data.name == "samsum":
-            tasks = [task_set["dialogue"] for task_set in shuffled_eval_data]
-            ground_truths = [task_set["summary"] for task_set in shuffled_eval_data]
+            tasks = [task_set["dialogue"] for task_set in eval_data]
+            ground_truths = [task_set["summary"] for task_set in eval_data]
         elif config.data.name == "gsm8k":
-            tasks = [task_set["question"] for task_set in shuffled_eval_data]
-            ground_truths = [task_set["answer"] for task_set in shuffled_eval_data]
+            tasks = [task_set["question"] for task_set in eval_data]
+            ground_truths = [task_set["answer"] for task_set in eval_data]
         elif config.data.name == "opus":
-            tasks = [task_set["de"] for task_set in shuffled_eval_data]
-            ground_truths = [task_set["en"] for task_set in shuffled_eval_data]
+            tasks = [task_set["de"] for task_set in eval_data]
+            ground_truths = [task_set["en"] for task_set in eval_data]
         else:
             raise ValueError(f"Invalid dataset name: {config.dataset_name}")
         
@@ -101,13 +102,16 @@ def main(config: DictConfig):
         memory = debate.execute_debate(tasks, ground_truths, append=False)
         del debate
         del critic
+        del team
 
         instruction_data = memory.provide_instruction_data()
 
         for expert in experts:
             expert.memory_fine_tuning(instruction_data)
+        
+        refined_team = ExpertTeam(experts)
 
-        after_expert_scores = expert_test_evaluation(team, test_tasks, test_ground_truths, metrics)
+        after_expert_scores = expert_test_evaluation(refined_team, test_tasks, test_ground_truths, metrics)
 
         data_json[run+1] = {
             "before": before_expert_scores,
@@ -124,6 +128,9 @@ def main(config: DictConfig):
                     "before": [before_expert_scores[i][expert_idx]],
                     "after": [after_expert_scores[i][expert_idx]]
                 })], ignore_index=True)
+
+        del experts
+        del refined_team
     
     data.to_csv(hydra_output_path + "/expert_run_performance.csv", index=False)
     plot_expert_run_performance(data, hydra_output_path + f"/{config.experts.num_experts}_experts_run_performance.png")

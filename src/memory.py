@@ -28,7 +28,7 @@ class Memory:
         # Save to file
         self._save_feedback()
     
-    def format_instruction_data(self, load_all: bool = False):
+    def format_instruction_data(self):
         """
         Convert stored feedback into instruction tuning format.
         
@@ -37,10 +37,7 @@ class Memory:
         """
         self.instruction_data = []
         
-        # If load_all is True, get all feedback from disk
-        feedback_to_process = self.get_all_feedback() if load_all else self.feedback_history
-        
-        for entry in feedback_to_process:
+        for entry in self.feedback_history:
             for inp, out, feedback in zip(entry['original_inputs'], entry['expert_outputs'], entry['critic_feedback']):
                 instruction = f"""Below is feedback 
 Input: {inp}
@@ -54,7 +51,7 @@ Generate an improved response that addresses the critic's feedback."""
                     "output": feedback
                 })
 
-    def provide_instruction_data(self, load_all: bool = False):
+    def provide_instruction_data(self):
         """
         Provide instruction data for training.
         
@@ -62,7 +59,7 @@ Generate an improved response that addresses the critic's feedback."""
             load_all: If True, load all feedback from disk before formatting
         """
         if self.instruction_data is None:
-            self.format_instruction_data(load_all=load_all)
+            self.format_instruction_data()
         return self.instruction_data
     
     def _save_feedback(self):
@@ -82,4 +79,4 @@ Generate an improved response that addresses the critic's feedback."""
         """Clear all stored feedback and instruction data."""
         self.feedback_history = []
         self.instruction_data = None
-        # self._save_feedback(append=append)
+        self._save_feedback(append=append)

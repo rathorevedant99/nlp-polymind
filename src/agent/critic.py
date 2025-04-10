@@ -5,8 +5,6 @@ Critic Class
 
 from src.agent.base import BaseAgent
 import logging
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
-import re
 import torch
 
 logger = logging.getLogger(__name__)
@@ -156,9 +154,11 @@ class Critic(BaseAgent):
             logger.debug(f"critic output whole: {critic_output}")
             return critic_output
         else:
+            logger.debug(f"Prompt to Critic for batch: {prompt}")
             tokenized_prompt = self.tokenizer(prompt, return_tensors="pt", padding=True)
             tokenized_prompt = tokenized_prompt.to(self.device_available)
 
+            logger.debug("Generating critic output.")
             torch.cuda.empty_cache()
             output = self.model.generate(
                 input_ids=tokenized_prompt["input_ids"],

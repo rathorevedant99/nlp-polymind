@@ -9,6 +9,7 @@ from datasets import Dataset
 import os
 import logging
 import torch
+import random
 from typing import List
 logger = logging.getLogger(__name__)
 
@@ -48,7 +49,8 @@ class Expert(BaseAgent):
         self.model.config.gradient_checkpointing = False
         self.model.print_trainable_parameters()
 
-        self.training_args = TrainingArguments(**config.training)
+        ## The random seed prevents the finetuning phase from fixing the global seed
+        self.training_args = TrainingArguments(**config.training, seed=random.randint(0, 2**32 - 1))
         self.feedback_size = config.experts.feedback_size
 
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -179,7 +181,8 @@ class Expert(BaseAgent):
             save_strategy="no",
             learning_rate=self.config.training.learning_rate * 0.1,  # Lower learning rate for continued training
             max_steps=self.config.training.max_steps,
-            logging_steps=self.config.training.logging_steps
+            logging_steps=self.config.training.logging_steps,
+            seed=random.randint(0, 2**32 - 1)
         )
 
         data_collator = DataCollatorForLanguageModeling(self.tokenizer, mlm=False)

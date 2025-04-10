@@ -41,90 +41,88 @@ def main(config: DictConfig):
     """
     Loads the config and runs the experiment.
     """
-    runs = 10
     data = pd.DataFrame(columns=["run", "expert_id", "before", "after"])
     hydra_output_path = hydra.core.hydra_config.HydraConfig.get().runtime.output_dir
     data_json_path = hydra_output_path + "/run_data.json"
 
-    for run in tqdm(range(runs), desc="Run"):
-        if os.path.exists(data_json_path):
-            with open(data_json_path, "r") as f:
-                data_json = json.load(f)
-        else:
-            data_json = {}
+    if os.path.exists(data_json_path):
+        with open(data_json_path, "r") as f:
+            data_json = json.load(f)
+    else:
+        data_json = {}
 
-        arranger = Arranger(config)
-        expert_datasets, eval_data, test_data = arranger.create_datasets()
+    arranger = Arranger(config)
+    expert_datasets, eval_data, test_data = arranger.create_datasets()
 
-        num_experts = config.experts.num_experts
-        experts = []
+    num_experts = config.experts.num_experts
+    experts = []
 
-        for i in range(num_experts):
-            expert = Expert(config, i, expert_datasets[i], eval_data)
-            logger.info(f"Ready expert {i}")
+    for i in range(num_experts):
+        expert = Expert(config, i, expert_datasets[i], eval_data)
+        logger.info(f"Ready expert {i}")
 
-            try:
-                expert.fine_tune_std_lora(save=True)
-                logger.info(f"Fine-tuned expert {i}")
-            except Exception as e:
-                logger.error(f"Error fine-tuning expert {i}: {e}")
-                raise e
-            experts.append(expert)
+        try:
+            expert.fine_tune_std_lora(save=True)
+            logger.info(f"Fine-tuned expert {i}")
+        except Exception as e:
+            logger.error(f"Error fine-tuning expert {i}: {e}")
+            raise e
+        experts.append(expert)
 
-        team = ExpertTeam(experts)
+    team = ExpertTeam(experts)
 
-        critic = Critic(config)
-        debate = Debate(config, team, critic)
+    shuffled_eval_data = eval_data.shuffle()
+    if config.data.name == "samsum":
+        tasks = [task_set["dialogue"] for task_set in shuffled_eval_data]
+        ground_truths = [task_set["summary"] for task_set in shuffled_eval_data]
+    elif config.data.name == "gsm8k":
+        tasks = [task_set["question"] for task_set in shuffled_eval_data]
+        ground_truths = [task_set["answer"] for task_set in shuffled_eval_data]
+    elif config.data.name == "opus":
+        tasks = [task_set["de"] for task_set in shuffled_eval_data]
+        ground_truths = [task_set["en"] for task_set in shuffled_eval_data]
+    else:
+        raise ValueError(f"Invalid dataset name: {config.dataset_name}")
+    
+    metrics = Metrics()
 
-        logger.info("Starting debate")
+    test_data = test_data.select(range(10))
+    test_tasks = [task_set["dialogue"] for task_set in test_data]
+    test_ground_truths = [task_set["summary"] for task_set in test_data]
 
-        shuffled_eval_data = eval_data.shuffle(seed=run)
-        if config.data.name == "samsum":
-            tasks = [task_set["dialogue"] for task_set in shuffled_eval_data]
-            ground_truths = [task_set["summary"] for task_set in shuffled_eval_data]
-        elif config.data.name == "gsm8k":
-            tasks = [task_set["question"] for task_set in shuffled_eval_data]
-            ground_truths = [task_set["answer"] for task_set in shuffled_eval_data]
-        elif config.data.name == "opus":
-            tasks = [task_set["de"] for task_set in shuffled_eval_data]
-            ground_truths = [task_set["en"] for task_set in shuffled_eval_data]
-        else:
-            raise ValueError(f"Invalid dataset name: {config.dataset_name}")
+    before_expert_scores = expert_test_evaluation(team, test_tasks, test_ground_truths, metrics)
+
+    critic = Critic(config)
+    debate = Debate(config, team, critic)
+
+    logger.info("Starting debate")
         
-        metrics = Metrics()
+    memory = debate.execute_debate(tasks, ground_truths, append=True)
+    del debate
+    del critic
 
-        test_data = test_data.select(range(10))
-        test_tasks = [task_set["dialogue"] for task_set in test_data]
-        test_ground_truths = [task_set["summary"] for task_set in test_data]
+    instruction_data = memory.provide_instruction_data()
 
-        before_expert_scores = expert_test_evaluation(team, test_tasks, test_ground_truths, metrics)
-            
-        memory = debate.execute_debate(tasks, ground_truths, append=True)
-        del debate
-        del critic
+    for expert in experts:
+        expert.memory_fine_tuning(instruction_data)
 
-        instruction_data = memory.provide_instruction_data()
+    after_expert_scores = expert_test_evaluation(team, test_tasks, test_ground_truths, metrics)
 
-        for expert in experts:
-            expert.memory_fine_tuning(instruction_data)
+    data_json["0"] = {
+        "before": before_expert_scores,
+        "after": after_expert_scores
+    }
 
-        after_expert_scores = expert_test_evaluation(team, test_tasks, test_ground_truths, metrics)
+    json.dump(data_json, open(data_json_path, "w"), indent=2)
 
-        data_json[run+1] = {
-            "before": before_expert_scores,
-            "after": after_expert_scores
-        }
-
-        json.dump(data_json, open(data_json_path, "w"), indent=2)
-
-        for i in range(len(before_expert_scores)):
-            for expert_idx in range(len(before_expert_scores[i])):
-                data = pd.concat([data, pd.DataFrame({
-                    "run": [run+1],
-                    "expert_id": [expert_idx],
-                    "before": [before_expert_scores[i][expert_idx]],
-                    "after": [after_expert_scores[i][expert_idx]]
-                })], ignore_index=True)
+    for i in range(len(before_expert_scores)):
+        for expert_idx in range(len(before_expert_scores[i])):
+            data = pd.concat([data, pd.DataFrame({
+                "run": ["0"],
+                "expert_id": [expert_idx],
+                "before": [before_expert_scores[i][expert_idx]],
+                "after": [after_expert_scores[i][expert_idx]]
+            })], ignore_index=True)
 
     data.to_csv(hydra_output_path + "/expert_run_performance.csv", index=False)
     plot_expert_run_performance(data, hydra_output_path + "/succesive_memory_experts_run_performance.png")
