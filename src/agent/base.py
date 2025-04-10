@@ -27,6 +27,7 @@ class BaseAgent:
                     self.model = AutoModelForSeq2SeqLM.from_pretrained(self.config.critic.name)
                 self.device_available = "cuda" if torch.cuda.is_available() else "mps" if torch.backends.mps.is_available() else "cpu"
                 self.model.to(self.device_available)
+                self.model.eval()
 
             self.tokenizer = AutoTokenizer.from_pretrained(self.config.critic.name)
         

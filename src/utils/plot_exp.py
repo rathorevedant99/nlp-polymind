@@ -3,10 +3,10 @@ matplotlib.use('Agg')  # For headless environments
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-
-# root_path = "/cs/student/projects1/ml/2024/vrathore/nlp/nlp-polymind/outputs"
-# target_folder = "2025-04-08/23-50-57"
-# data = pd.read_csv(f"{root_path}/{target_folder}/run_data.csv")
+import os
+root_path = os.getcwd()
+target_folder = "outputs/2025-04-10/03-02-11"
+data = pd.read_csv(f"{root_path}/{target_folder}/run_data.csv")
 
 def plot_expert_run_performance(data: pd.DataFrame, save_path: str):
     # Calculate mean performance for each expert in each run
@@ -146,3 +146,7 @@ def plot_expert_run_performance_for_memory_size(data: pd.DataFrame, save_path: s
     plt.tight_layout()
     plt.savefig(save_path, dpi=300, bbox_inches='tight')
     plt.close()
+
+plot_expert_run_performance(data, f"{root_path}/{target_folder}/expert_run_performance.png")
+plot_expert_summary(data, f"{root_path}/{target_folder}/expert_summary.png")
+# plot_expert_run_performance_for_memory_size(data, f"{root_path}/{target_folder}/expert_run_performance_for_memory_size.png", 10, 10)

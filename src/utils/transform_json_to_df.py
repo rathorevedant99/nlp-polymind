@@ -1,9 +1,8 @@
 import json
 import pandas as pd
-import numpy as np
-
-root_path = "/cs/student/projects1/ml/2024/vrathore/nlp/nlp-polymind/outputs"
-target_folder = "2025-04-09/03-34-56"
+import os
+root_path = os.getcwd()
+target_folder = "outputs/2025-04-10/03-02-11"
 with open(f'{root_path}/{target_folder}/run_data.json', 'r') as f:
     data = json.load(f)
 

@@ -42,7 +42,7 @@ class Arranger:
         dataset_size = len(shuffled_data)
         expert_dataset_size = dataset_size // self.num_experts
 
-        test_data = test_data.shuffle(seed=42)
+        test_data = test_data.shuffle()
         eval_data = eval_data.shuffle()
         expert_datasets = []
 

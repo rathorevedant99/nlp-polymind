@@ -12,11 +12,10 @@ from src.metrics import Metrics
 from src.utils.plot_exp import plot_expert_run_performance, plot_expert_summary
 import logging
 import pandas as pd
-from tqdm import tqdm
 import shutil
 import json
 import os
-
+import torch
 import absl.logging
 absl.logging.set_verbosity(absl.logging.ERROR)
 
@@ -103,6 +102,7 @@ def main(config: DictConfig):
     memory = debate.execute_debate(tasks, ground_truths, append=True)
     del debate
     del critic
+    torch.cuda.empty_cache()
 
     instruction_data = memory.provide_instruction_data()
 

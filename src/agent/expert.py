@@ -62,7 +62,7 @@ class Expert(BaseAgent):
         """
         raise NotImplementedError("Unsloth fine-tuning is not implemented yet")
 
-    def fine_tune_std_lora(self, save=False):
+    def fine_tune_std_lora(self, save=False, load=False):
         """
         Fine-tune the critic on the given data using standard LORA.
         """
@@ -70,9 +70,10 @@ class Expert(BaseAgent):
             raise ValueError("Train and eval data must be provided")
         
         if os.path.exists(self.config.training.output_dir+f"/expert_{self.expert_id}"):
-            self.load_lora()
-            logger.info(f"Loaded LORA weights for expert {self.expert_id}")
-            return
+            if load:
+                self.load_lora()
+                logger.info(f"Loaded LORA weights for expert {self.expert_id}")
+                return
         
         logger.info(f"Fine-tuning expert {self.expert_id} using standard LORA")
         data_collator = DataCollatorForLanguageModeling(self.tokenizer, mlm=False)
@@ -180,8 +181,8 @@ class Expert(BaseAgent):
         future_training_args = TrainingArguments(
             save_strategy="no",
             learning_rate=self.config.training.learning_rate * 0.1,  # Lower learning rate for continued training
-            max_steps=100,
-            logging_steps=self.config.training.logging_steps,
+            max_steps=200,
+            logging_steps=50,
             seed=random.randint(0, 2**32 - 1)
         )
 

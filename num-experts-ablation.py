@@ -15,13 +15,18 @@ import pandas as pd
 from tqdm import tqdm
 import os
 import json
+import torch
 
 import absl.logging
+import transformers.utils.logging
+transformers.utils.logging.set_verbosity_error()
+transformers.utils.logging.disable_progress_bar()
 absl.logging.set_verbosity(absl.logging.ERROR)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+os.environ['CUDA_LAUNCH_BLOCKING'] = '1'
 def expert_test_evaluation(team, test_tasks, test_ground_truths, metrics):
     expert_answers = {}
     expert_scores = {}
@@ -43,7 +48,7 @@ def main(config: DictConfig):
     """
     Loads the config and runs the experiment.
     """
-    runs = 10
+    runs = 1
     data = pd.DataFrame(columns=["run", "expert_id", "before", "after"])
     hydra_output_path = hydra.core.hydra_config.HydraConfig.get().runtime.output_dir
     data_json_path = hydra_output_path + "/run_data.json"
@@ -98,13 +103,14 @@ def main(config: DictConfig):
         test_tasks = [task_set["dialogue"] for task_set in test_data]
         test_ground_truths = [task_set["summary"] for task_set in test_data]
 
+        logger.info(f"Computing expert scores before debate")
         before_expert_scores = expert_test_evaluation(team, test_tasks, test_ground_truths, metrics)
             
         memory = debate.execute_debate(tasks, ground_truths, append=False)
         del debate
         del critic
         del team
-
+        torch.cuda.empty_cache()
         instruction_data = memory.provide_instruction_data()
 
         for expert in experts:
@@ -112,6 +118,7 @@ def main(config: DictConfig):
         
         refined_team = ExpertTeam(experts)
 
+        logger.info(f"Computing expert scores after debate")
         after_expert_scores = expert_test_evaluation(refined_team, test_tasks, test_ground_truths, metrics)
 
         data_json[run+1] = {
@@ -132,6 +139,7 @@ def main(config: DictConfig):
 
         del experts
         del refined_team
+        torch.cuda.empty_cache()
     
     data.to_csv(hydra_output_path + "/expert_run_performance.csv", index=False)
     plot_expert_run_performance(data, hydra_output_path + f"/{config.experts.num_experts}_experts_run_performance.png")
