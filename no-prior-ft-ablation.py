@@ -16,6 +16,9 @@ from tqdm import tqdm
 import os
 import json
 
+import absl.logging
+absl.logging.set_verbosity(absl.logging.ERROR)
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 

@@ -39,7 +39,7 @@ training:
   gradient_accumulation_steps: 4
   eval_accumulation_steps: 4
   eval_steps: 500
-  max_steps: 20
+  max_steps: 200
   logging_steps: 20
   learning_rate: 1e-5
   weight_decay: 0.01

@@ -16,6 +16,7 @@ from tqdm import tqdm
 import os
 import json
 
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 

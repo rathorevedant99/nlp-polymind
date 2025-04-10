@@ -16,6 +16,9 @@ from tqdm import tqdm
 import os
 import json
 
+import absl.logging
+absl.logging.set_verbosity(absl.logging.ERROR)
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -31,8 +34,6 @@ def expert_test_evaluation(team, test_tasks, test_ground_truths, metrics):
         for expert_idx in range(len(team.experts)):
             exp_scores.append(rouge_score[str(expert_idx)]["rouge1"].fmeasure)
         expert_scores[i] = exp_scores
-
-    logger.info(f"Expert answers: {expert_answers}")
 
     return expert_scores
         

@@ -17,6 +17,9 @@ import shutil
 import json
 import os
 
+import absl.logging
+absl.logging.set_verbosity(absl.logging.ERROR)
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
