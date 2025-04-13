@@ -2,14 +2,15 @@ import json
 import pandas as pd
 import os
 root_path = os.getcwd()
-target_folder = "outputs/2025-04-13/07-15-06"
+target_folder = "outputs/2025-04-13/12-53-28"
 with open(f'{root_path}/{target_folder}/run_data.json', 'r') as f:
     data = json.load(f)
 
 rows = []
 
-# First, let's determine the number of experts from the length of any value array
-sample_task = data['1']['before']['0']
+# Get the first available run ID dynamically
+first_run_id = next(iter(data.keys()))
+sample_task = data[first_run_id]['before']['0']
 num_experts = len(sample_task)
 
 for run_id, run_data in data.items():
