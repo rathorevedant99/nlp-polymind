@@ -33,11 +33,11 @@ def expert_test_evaluation(team, test_tasks, test_ground_truths, metrics):
 
     for i, task in enumerate(test_tasks):
         expert_answers[i] = team.get_expert_answers(task)
-        rouge_score = metrics.eval_rouge(test_ground_truths[i], expert_answers[i])
+        bertscore = metrics.eval_bertscore(test_ground_truths[i], expert_answers[i])
 
         exp_scores = []
         for expert_idx in range(len(team.experts)):
-            exp_scores.append(rouge_score[str(expert_idx)]["rouge1"].fmeasure)
+            exp_scores.append(bertscore[str(expert_idx)]["f1"])
         expert_scores[i] = exp_scores
 
     return expert_scores
@@ -99,7 +99,7 @@ def main(config: DictConfig):
         
         metrics = Metrics()
 
-        test_data = test_data.select(range(10))
+        test_data = test_data.select(range(100))
         test_tasks = [task_set["dialogue"] for task_set in test_data]
         test_ground_truths = [task_set["summary"] for task_set in test_data]
 
