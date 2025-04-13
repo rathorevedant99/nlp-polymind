@@ -1,6 +1,5 @@
 from src.agent.team import ExpertTeam
 from src.agent.critic import Critic
-from src.metrics import Metrics
 from typing import List, Dict
 import logging
 from src.memory import Memory
@@ -24,11 +23,16 @@ class Debate:
         if not isinstance(critic, Critic):
             raise ValueError("Critic must be an instance of Critic class")
 
-    def execute_debate(self, tasks: List[str], ground_truths: List[str]):
+    def execute_debate(self, tasks: List[str], ground_truths: List[str], append: bool = True):
         """
         Execute a debate between the experts and the critic.
+        
+        Args:
+            tasks: List of tasks to debate
+            ground_truths: List of ground truths for the tasks
+            append: Whether to append to existing memory file (default: False)
         """
-        memory = Memory()
+        memory = Memory(task_name=self.config.data.category)
 
         batched_tasks = [tasks[i:i+self.batch_size] for i in range(0, len(tasks), self.batch_size)]
         batched_ground_truths = [ground_truths[i:i+self.batch_size] for i in range(0, len(ground_truths), self.batch_size)]
@@ -38,16 +42,19 @@ class Debate:
 
         for task_batch, ground_truth_batch in tqdm(zip(batched_tasks, batched_ground_truths), total=max_rounds, desc="Debate"):
             expert_answers = {}
+            logger.debug(f"Debating task batch.")
             for task in task_batch:
                 expert_answers[task] = self.expert_team.get_expert_answers(task)
 
             expert_answers = [expert_answers[task] for task in task_batch]
-            
-            critic_feedback = self.critic(task_batch, expert_answers, ground_truth_batch)
+            logger.debug(f"Generated expert answers.")
 
-            memory.add_critic_feedback(original_inputs=task_batch, expert_outputs=expert_answers, critic_feedback=critic_feedback)
-            
+            critic_feedback = self.critic(task_batch, expert_answers, ground_truth_batch)
+            logger.debug(f"Generated critic feedback.")
+            memory.add_critic_feedback(task_batch, expert_answers, critic_feedback, append)
+            logger.debug(f"Added critic feedback to memory.")
             counter += 1
+        
             if counter == max_rounds:
                 break
 

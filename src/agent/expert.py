@@ -9,6 +9,7 @@ from datasets import Dataset
 import os
 import logging
 import torch
+import random
 from typing import List
 logger = logging.getLogger(__name__)
 
@@ -48,10 +49,12 @@ class Expert(BaseAgent):
         self.model.config.gradient_checkpointing = False
         self.model.print_trainable_parameters()
 
-        self.training_args = TrainingArguments(**config.training)
-
-        self.feedback = []
+        ## The random seed prevents the finetuning phase from fixing the global seed
+        self.training_args = TrainingArguments(**config.training, seed=random.randint(0, 2**32 - 1))
         self.feedback_size = config.experts.feedback_size
+
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.model.to(self.device)
     
     def fine_tune_unsloth(self):
         """
@@ -59,7 +62,7 @@ class Expert(BaseAgent):
         """
         raise NotImplementedError("Unsloth fine-tuning is not implemented yet")
 
-    def fine_tune_std_lora(self, save=False):
+    def fine_tune_std_lora(self, save=False, load=False):
         """
         Fine-tune the critic on the given data using standard LORA.
         """
@@ -67,9 +70,10 @@ class Expert(BaseAgent):
             raise ValueError("Train and eval data must be provided")
         
         if os.path.exists(self.config.training.output_dir+f"/expert_{self.expert_id}"):
-            self.load_lora()
-            logger.info(f"Loaded LORA weights for expert {self.expert_id}")
-            return
+            if load:
+                self.load_lora()
+                logger.info(f"Loaded LORA weights for expert {self.expert_id}")
+                return
         
         logger.info(f"Fine-tuning expert {self.expert_id} using standard LORA")
         data_collator = DataCollatorForLanguageModeling(self.tokenizer, mlm=False)
@@ -175,10 +179,11 @@ class Expert(BaseAgent):
         dataset = dataset.map(preprocess_function, batched=True)
 
         future_training_args = TrainingArguments(
-            output_dir=f"{self.config.training.output_dir}/expert_{self.expert_id}_continued_ft",
-            learning_rate=self.config.training.learning_rate * 0.1,  # Lower learning rate for continued training
-            max_steps=self.config.training.max_steps,
-            logging_steps=self.config.training.logging_steps
+            save_strategy="no",
+            learning_rate=self.config.memory_ft.learning_rate,
+            max_steps=self.config.memory_ft.max_steps,
+            logging_steps=50,
+            seed=random.randint(0, 2**32 - 1)
         )
 
         data_collator = DataCollatorForLanguageModeling(self.tokenizer, mlm=False)

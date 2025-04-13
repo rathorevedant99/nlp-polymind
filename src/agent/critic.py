@@ -5,8 +5,6 @@ Critic Class
 
 from src.agent.base import BaseAgent
 import logging
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
-import re
 import torch
 
 logger = logging.getLogger(__name__)
@@ -156,16 +154,20 @@ class Critic(BaseAgent):
             logger.debug(f"critic output whole: {critic_output}")
             return critic_output
         else:
+            logger.debug(f"Prompt to Critic for batch: {prompt}")
             tokenized_prompt = self.tokenizer(prompt, return_tensors="pt", padding=True)
             tokenized_prompt = tokenized_prompt.to(self.device_available)
 
+            logger.debug("Generating critic output.")
             torch.cuda.empty_cache()
-            output = self.model.generate(
-                input_ids=tokenized_prompt["input_ids"],
-                attention_mask=tokenized_prompt["attention_mask"],
-                pad_token_id=self.tokenizer.eos_token_id,
-                max_new_tokens=self.config.model_params.max_new_tokens
-            )
+            with torch.no_grad():
+                with torch.autocast(device_type="cuda", enabled=False):
+                    output = self.model.generate(
+                        input_ids=tokenized_prompt["input_ids"],
+                        attention_mask=tokenized_prompt["attention_mask"],
+                        pad_token_id=self.tokenizer.eos_token_id,
+                        max_new_tokens=self.config.model_params.max_new_tokens
+                    )
             critic_output = self.tokenizer.decode(output[0], skip_special_tokens=True)
             critic_output = critic_output.split("=== Feedback ===")[-1].strip()
             logger.debug(f"critic output whole: {critic_output}")
