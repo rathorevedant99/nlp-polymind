@@ -7,7 +7,7 @@ critic:
   is_openrouter: false
 
 experts:
-  num_experts: 2
+  num_experts: 3
   type: "seq2seq" # causal
   name: "google/flan-t5-small" # HuggingFaceTB/SmolLM2-135M
   device: cuda
@@ -29,6 +29,10 @@ lora:
   lora_alpha: 16
   lora_dropout: 0.1
   bias: "none"
+
+memory_ft:
+  max_steps: 500
+  learning_rate: 1e-5
 
 training:
   output_dir: "./results"

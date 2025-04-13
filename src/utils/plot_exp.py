@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 import os
 root_path = os.getcwd()
-target_folder = "outputs/2025-04-10/03-02-11"
+target_folder = "outputs/2025-04-13/07-15-06"
 data = pd.read_csv(f"{root_path}/{target_folder}/run_data.csv")
 
 def plot_expert_run_performance(data: pd.DataFrame, save_path: str):
@@ -38,13 +38,6 @@ def plot_expert_run_performance(data: pd.DataFrame, save_path: str):
         after_bars = ax.bar(x + group_offset + width, expert_data['after'], width, 
                            label=f'Expert {expert} After', 
                            color=colors[i % len(colors)], alpha=0.9)
-
-        # Add value labels
-        # for j, (before, after) in enumerate(zip(expert_data['before'], expert_data['after'])):
-        #     ax.text(x[j] + group_offset, before + 0.01, f'{before:.3f}', 
-        #            ha='center', va='bottom', fontsize=8)
-        #     ax.text(x[j] + group_offset + width, after + 0.01, f'{after:.3f}', 
-        #            ha='center', va='bottom', fontsize=8)
 
     # Adjust plot settings
     ax.set_xticks(x)
@@ -79,16 +72,17 @@ def plot_expert_summary(data: pd.DataFrame, save_path: str):
 
     for i in x:
         ax.text(i - width/2, summary.loc[i, 'before_mean'] + 0.01, 
-                f"{summary.loc[i, 'before_mean']:.3f}", ha='center', fontsize=8)
+                f"{summary.loc[i, 'before_mean']:.3f}", ha='center', fontsize=20)
         ax.text(i + width/2, summary.loc[i, 'after_mean'] + 0.01, 
-                f"{summary.loc[i, 'after_mean']:.3f}", ha='center', fontsize=8)
+                f"{summary.loc[i, 'after_mean']:.3f}", ha='center', fontsize=20)
 
     ax.set_xticks(x)
     ax.set_xticklabels([f'Expert {i}' for i in summary['expert_id']])
-    ax.set_xlabel('Expert')
-    ax.set_ylabel('Average ROUGE-1 F Measure')
-    ax.set_title('Overall Expert Performance')
-    ax.legend()
+    ax.tick_params(axis='x', labelsize=20)
+    ax.set_xlabel('Expert', fontsize=20)
+    ax.set_ylabel('Average ROUGE-1 F Measure', fontsize=20)
+    ax.set_title('Overall Expert Performance', fontsize=20)
+    ax.legend(fontsize=20)
     ax.grid(axis='y', linestyle='--', alpha=0.6)
     plt.tight_layout()
     plt.savefig(save_path, dpi=300)

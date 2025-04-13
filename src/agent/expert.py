@@ -180,8 +180,8 @@ class Expert(BaseAgent):
 
         future_training_args = TrainingArguments(
             save_strategy="no",
-            learning_rate=self.config.training.learning_rate * 0.1,  # Lower learning rate for continued training
-            max_steps=200,
+            learning_rate=self.config.memory_ft.learning_rate,
+            max_steps=self.config.memory_ft.max_steps,
             logging_steps=50,
             seed=random.randint(0, 2**32 - 1)
         )

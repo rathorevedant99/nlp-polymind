@@ -71,7 +71,7 @@ def main(config: DictConfig):
             logger.info(f"Ready expert {i}")
 
             try:
-                expert.fine_tune_std_lora(save=False)
+                expert.fine_tune_std_lora(save=True, load=True)
                 logger.info(f"Fine-tuned expert {i}")
             except Exception as e:
                 logger.error(f"Error fine-tuning expert {i}: {e}")
