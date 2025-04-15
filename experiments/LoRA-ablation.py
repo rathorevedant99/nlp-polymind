@@ -79,42 +79,6 @@ def main(config: DictConfig):
                 raise e 
 
         team = ExpertTeam(experts)
-
-        # critic = Critic(config)
-        # debate = Debate(config, team, critic)
-
-        # logger.info("Starting debate")
-
-        # shuffled_eval_data = eval_data.shuffle()
-        # if config.data.name == "samsum":
-        #     tasks = [task_set["dialogue"] for task_set in shuffled_eval_data]
-        #     ground_truths = [task_set["summary"] for task_set in shuffled_eval_data]
-        # elif config.data.name == "gsm8k":
-        #     tasks = [task_set["question"] for task_set in shuffled_eval_data]
-        #     ground_truths = [task_set["answer"] for task_set in shuffled_eval_data]
-        # elif config.data.name == "opus":
-        #     tasks = [task_set["de"] for task_set in shuffled_eval_data]
-        #     ground_truths = [task_set["en"] for task_set in shuffled_eval_data]
-        # else:
-        #     raise ValueError(f"Invalid dataset name: {config.dataset_name}")
-        
-        # metrics = Metrics()
-
-        # test_data = test_data.select(range(10))
-        # test_tasks = [task_set["dialogue"] for task_set in test_data]
-        # test_ground_truths = [task_set["summary"] for task_set in test_data]
-
-        # before_expert_scores = expert_test_evaluation(team, test_tasks, test_ground_truths, metrics)
-            
-        # memory = debate.execute_debate(tasks, ground_truths)
-        # del debate
-        # del critic
-
-        # instruction_data = memory.provide_instruction_data()
-
-        # for expert in experts:
-        #     expert.memory_fine_tuning(instruction_data)
-
         after_expert_scores = expert_test_evaluation(team, test_tasks, test_ground_truths, metrics)
 
         for i in range(len(before_expert_scores)):
