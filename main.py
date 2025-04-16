@@ -9,7 +9,7 @@ from src.agent.critic import Critic
 from src.utils.arranger import Arranger
 from src.eval import Debate
 from src.metrics import Metrics
-from src.utils.plot_exp import plot_expert_run_performance, plot_expert_summary
+# from src.utils.plot_exp import plot_expert_run_performance, plot_expert_summary
 import logging
 import pandas as pd
 from tqdm import tqdm
@@ -140,8 +140,8 @@ def main(config: DictConfig):
     torch.cuda.empty_cache()
     
     data.to_csv(hydra_output_path + "/expert_run_performance.csv", index=False)
-    plot_expert_run_performance(data, hydra_output_path + f"/{config.experts.num_experts}_experts_run_performance.png")
-    plot_expert_summary(data, hydra_output_path + f"/{config.experts.num_experts}_experts_summary.png")
+    # plot_expert_run_performance(data, hydra_output_path + f"/{config.experts.num_experts}_experts_run_performance.png")
+    # plot_expert_summary(data, hydra_output_path + f"/{config.experts.num_experts}_experts_summary.png")
 
 if __name__ == "__main__":
     main()

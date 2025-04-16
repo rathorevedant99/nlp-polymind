@@ -1,0 +1,46 @@
+=== SUMMARY TABLE === Expert ID  Sample Size  Before Mean  After Mean  Mean Diff  Effect Size  Wilcoxon p  t-test p  Randomization p  Significant
+         0          300     0.395185    0.422721   0.027535     0.205676    0.000354  0.000254            0.001         True
+         1          300     0.396365    0.404230   0.007865     0.057076    0.284743  0.283077            0.286        False
+Percentage of experts with significant improvement: 50.0% (1/2)
+
+=== OVERALL IMPROVEMENT ANALYSIS ===
+Sample Size: 600
+
+Mean Before: 0.39578 ± 0.12941
+
+Mean After: 0.41348 ± 0.14209
+
+Mean Difference: 0.01770 [90% CI: 0.00910, 0.02630]
+
+Effect Size (Cohen's d): 0.13025
+
+Wilcoxon Test: p = 0.00116 *
+
+Paired t-test: p = 0.00075 *
+
+Randomization Test: p = 0.00100 *
+  ** Statistically significant improvement **
+
+
+=== INDIVIDUAL EXPERT ANALYSIS ===
+Expert 0:
+  Sample Size: 300
+  Mean Before: 0.39519
+  Mean After: 0.42272
+  Mean Difference: 0.02754
+  Effect Size (Cohen's d): 0.20568
+  Wilcoxon Test: p = 0.00035 *
+  Paired t-test: p = 0.00025 *
+  Randomization Test: p = 0.00100 *
+  ** Statistically significant improvement **
+
+Expert 1:
+  Sample Size: 300
+  Mean Before: 0.39637
+  Mean After: 0.40423
+  Mean Difference: 0.00787
+  Effect Size (Cohen's d): 0.05708
+  Wilcoxon Test: p = 0.28474 
+  Paired t-test: p = 0.28308 
+  Randomization Test: p = 0.28600 
+

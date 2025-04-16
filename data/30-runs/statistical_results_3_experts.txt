@@ -1,0 +1,13 @@
+
+=== STATISTICAL ANALYSIS RESULTS (α = 0.05) ===
+=== OVERALL STATISTICS ===Total Experts: 3
+Experts with significant improvement (t-test): 2
+Experts with significant improvement (Wilcoxon): 2
+Experts with significant improvement (Randomization): 2
+
+=== Detailed Results ===
+Expert 0:  Sample Size: 300  Mean Before: 0.385  Mean After: 0.407  Mean Difference: 0.022  Effect Size (Cohen's d): 0.163  Paired t-test: p = 0.006 *  Wilcoxon Test: p = 0.014 *  Randomization Test: p = 0.009 *  ** Statistically significant change **
+
+Expert 1:  Sample Size: 300  Mean Before: 0.390  Mean After: 0.410  Mean Difference: 0.020  Effect Size (Cohen's d): 0.147  Paired t-test: p = 0.013 *  Wilcoxon Test: p = 0.023 *  Randomization Test: p = 0.017 *  ** Statistically significant change **
+
+Expert 2:  Sample Size: 300  Mean Before: 0.405  Mean After: 0.403  Mean Difference: -0.002  Effect Size (Cohen's d): -0.016  Paired t-test: p = 0.783   Wilcoxon Test: p = 0.905   Randomization Test: p = 0.783 
