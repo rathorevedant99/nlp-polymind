@@ -7,13 +7,13 @@ critic:
   is_openrouter: false
 
 experts:
-  num_experts: 3
+  num_experts: 2
   type: "seq2seq" # causal
   name: "google/flan-t5-small" # HuggingFaceTB/SmolLM2-135M
   device: cuda
   debate_rounds: 5
   feedback_size: 100
-  batch_size: 15
+  batch_size: 10
   
 model_params:
   max_new_tokens: 256
@@ -30,6 +30,10 @@ lora:
   lora_dropout: 0.1
   bias: "none"
 
+memory_ft:
+  max_steps: 200
+  learning_rate: 1e-5
+
 training:
   output_dir: "./results"
   eval_strategy: "steps"
@@ -38,7 +42,7 @@ training:
   per_device_eval_batch_size: 1
   gradient_accumulation_steps: 4
   eval_accumulation_steps: 4
-  eval_steps: 200
+  eval_steps: 500
   max_steps: 200
   logging_steps: 20
   learning_rate: 1e-5

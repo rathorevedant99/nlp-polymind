@@ -43,10 +43,11 @@ class Metrics:
     def eval_bertscore(self, ground_truth: str, expert_answers: dict):
         # BERTScore handles stopwords contextually, no need for explicit filtering
         scorer = BERTScorer(lang="en", rescale_with_baseline=True)
+        expert_scores = {}
         for expert_id, answer in expert_answers.items():
-            scores = scorer.score([ground_truth], [answer])
-            print(f"Expert {expert_id} bertscore scores: {scores}")
-        return scores
+            P, R, F1 = scorer.score([answer], [ground_truth])
+            expert_scores[str(expert_id)] = {"f1": float(F1[0])}
+        return expert_scores
     
     def eval_novelty(self, ground_truth: str, expert_answers: dict):
         """

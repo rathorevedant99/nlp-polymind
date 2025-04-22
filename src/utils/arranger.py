@@ -38,10 +38,12 @@ class Arranger:
         else:
             raise ValueError(f"Invalid dataset name: {self.config.dataset_name}")
         
-        shuffled_data = train_data.shuffle(seed=42)
+        shuffled_data = train_data.shuffle()
         dataset_size = len(shuffled_data)
         expert_dataset_size = dataset_size // self.num_experts
 
+        test_data = test_data.shuffle()
+        eval_data = eval_data.shuffle()
         expert_datasets = []
 
         for i in range(self.num_experts):

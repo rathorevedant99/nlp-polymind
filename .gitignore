@@ -194,3 +194,8 @@ wandb/*
 # Memory
 memory/*
 
+# Outputs
+*outputs/*
+*output*
+
+
