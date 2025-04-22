@@ -4,11 +4,9 @@ from scipy.stats import wilcoxon, ttest_rel, norm
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# Set the style for better visualizations
 sns.set_theme(style="whitegrid")
 plt.rcParams['figure.figsize'] = [12, 8]
 
-# Function to perform randomization test
 def randomization_test(before, after, n_permutations=1000):
     """
     Perform a randomization test on paired data
@@ -27,34 +25,28 @@ def randomization_test(before, after, n_permutations=1000):
     p_value : float
         The p-value from the randomization test
     """
-    # Calculate the observed test statistic (mean difference)
     observed_diff = np.mean(after - before)
     
-    # Initialize counter for more extreme differences
     count = 0
     
-    # Perform randomizations
     for _ in range(n_permutations):
-        # Randomly decide whether to swap each pair
         swaps = np.random.choice([-1, 1], size=len(before))
         permuted_diff = np.mean(swaps * (after - before))
         
-        # Count if this difference is as extreme as observed
         if abs(permuted_diff) >= abs(observed_diff):
             count += 1
     
-    # Calculate p-value
     p_value = (count + 1) / (n_permutations + 1)
     
     return round(p_value, 3)
 
-# Read the data
+## Pass the path to the data and the file name
 base_path = "./data/30-runs/"
 file = "2_experts.csv"
 
 df = pd.read_csv(base_path + file)
 
-# Calculate overall statistics
+## Overall statistics
 before_mean = df['before'].mean()
 after_mean = df['after'].mean()
 before_std = df['before'].std()
@@ -62,12 +54,12 @@ after_std = df['after'].std()
 mean_diff = after_mean - before_mean
 effect_size = mean_diff / np.sqrt((before_std**2 + after_std**2) / 2)
 
-# Perform statistical tests on overall data
+## Perform statistical tests on overall data
 w_stat, w_p_value = wilcoxon(df['before'], df['after'])
 t_stat, t_p_value = ttest_rel(df['before'], df['after'])
 r_p_value = randomization_test(df['before'].values, df['after'].values)
 
-# Calculate confidence interval for the mean difference
+# CI for the mean difference
 diff_std = df['after'] - df['before']
 diff_std_err = diff_std.std() / np.sqrt(len(diff_std))
 ci_lower = mean_diff - 1.645 * diff_std_err  # 90% CI
@@ -85,7 +77,7 @@ print(f"Paired t-test: p = {t_p_value:.5f} {'*' if t_p_value < 0.05 else ''}")
 print(f"Randomization Test: p = {r_p_value:.5f} {'*' if r_p_value < 0.05 else ''}")
 print("* indicates statistical significance at α = 0.05")
 
-# Analyze each expert separately
+# Per expert analysis
 print("\n=== INDIVIDUAL EXPERT ANALYSIS ===")
 expert_results = []
 

@@ -48,7 +48,7 @@ def main(config: DictConfig):
     """
     Loads the config and runs the experiment.
     """
-    runs = 1
+    runs = 30
     data = pd.DataFrame(columns=["run", "expert_id", "before", "after"])
     hydra_output_path = hydra.core.hydra_config.HydraConfig.get().runtime.output_dir
     data_json_path = hydra_output_path + "/run_data.json"

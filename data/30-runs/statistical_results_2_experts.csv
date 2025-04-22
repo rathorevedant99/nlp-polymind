@@ -1,3 +1,0 @@
-expert_id,sample_size,mean_before,mean_after,mean_diff,effect_size,t_statistic,t_p_value,t_significant,w_statistic,w_p_value,w_significant,r_p_value,r_significant
-0,300,0.389,0.416,0.027,0.209,-3.612,0.0,True,14370.5,0.001,True,0.001,True
-1,300,0.411,0.394,-0.017,-0.125,2.221,0.027,True,16476.0,0.088,True,0.027,True
